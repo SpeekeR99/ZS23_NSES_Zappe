@@ -2,19 +2,19 @@
 
 Layer::Layer(uint32_t size) : size(size) {
     this->neurons.reserve(this->size);
-    for (uint32_t i = 0; i < this->size; ++i)
+    for (uint32_t i = 0; i < this->size; i++)
         this->neurons.emplace_back(std::make_unique<Neuron>(0));
 }
 
 Layer::Layer(uint32_t size, act_func activation_function) : size(size) {
     this->neurons.reserve(this->size);
-    for (uint32_t i = 0; i < this->size; ++i)
+    for (uint32_t i = 0; i < this->size; i++)
         this->neurons.emplace_back(std::make_unique<Neuron>(0, activation_function));
 }
 
 Layer::Layer(uint32_t size, act_func_type activation_function) : size(size) {
     this->neurons.reserve(this->size);
-    for (uint32_t i = 0; i < this->size; ++i)
+    for (uint32_t i = 0; i < this->size; i++)
         this->neurons.emplace_back(std::make_unique<Neuron>(0, activation_function));
 }
 
@@ -26,7 +26,7 @@ void Layer::activate() {
 }
 
 void Layer::set_inputs(const std::vector<double> &inputs) {
-    for (uint32_t i = 0; i < this->size; ++i)
+    for (uint32_t i = 0; i < this->size; i++)
         this->neurons[i]->set_input(inputs[i]);
 }
 
@@ -46,4 +46,12 @@ std::vector<double> Layer::get_output() const {
     for (auto &neuron : this->neurons)
         output.push_back(neuron->get_output());
     return output;
+}
+
+double Layer::get_bias() const {
+    return this->bias;
+}
+
+uint32_t Layer::get_size() const {
+    return this->size;
 }

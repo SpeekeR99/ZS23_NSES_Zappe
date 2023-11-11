@@ -10,4 +10,6 @@ add_executable(
         src/nn/Neuron.h
         src/nn/Layer.cpp
         src/nn/Layer.h
-        src/nn/NeuralNetwork.cpp src/nn/NeuralNetwork.h)
+        src/nn/NeuralNetwork.cpp
+        src/nn/NeuralNetwork.h
+)

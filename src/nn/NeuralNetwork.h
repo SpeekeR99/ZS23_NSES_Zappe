@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include "Layer.h"
 
 class NeuralNetwork {
@@ -21,4 +22,9 @@ public:
                   const std::vector<uint32_t> &hidden_layers_sizes,
                   act_func_type activation_function);
     ~NeuralNetwork();
+
+    void set_inputs(const std::vector<double> &inputs);
+    [[nodiscard]] std::vector<double> get_output() const;
+
+    void forward_propagation();
 };

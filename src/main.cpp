@@ -2,12 +2,13 @@
 #include "nn/NeuralNetwork.h"
 
 int main() {
-    std::unique_ptr<NeuralNetwork> nn = std::make_unique<NeuralNetwork>(2, 1, std::vector<uint32_t>{10, 10}, act_func_type::sigmoid);
-    std::unique_ptr<Neuron> neuron = std::make_unique<Neuron>(0.5, act_func_type::sigmoid);
-    neuron->activate();
-    std::cout << neuron->get_output() << std::endl;
-    neuron->set_activation_function(act_func_type::relu);
-    neuron->activate();
-    std::cout << neuron->get_output() << std::endl;
-    return 0;
+    std::unique_ptr<NeuralNetwork> nn = std::make_unique<NeuralNetwork>(2, 2, std::vector<uint32_t>{5}, act_func_type::sigmoid);
+    nn->set_inputs({1, 2}); /* 	0.731058578630074, 0.8807970779779563 */
+    nn->forward_propagation();
+    /* 0.9316207029716523, 0.9316207029716523, 0.9316207029716523, 0.9316207029716523, 0.9316207029716523 */
+    auto output = nn->get_output(); /* 0.9965230039772246,  0.9965230039772246 */
+    for (auto &o : output)
+        std::cout << o << std::endl;
+
+    return EXIT_SUCCESS;
 }
