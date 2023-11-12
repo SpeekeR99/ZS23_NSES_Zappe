@@ -1,12 +1,12 @@
 #include "Matrix.h"
 
-Matrix::Matrix(int rows, int cols, bool randomize) : rows(rows), cols(cols) {
+Matrix::Matrix(uint32_t rows, uint32_t cols, bool randomize) : rows(rows), cols(cols) {
     this->data = std::vector<std::vector<double>>(rows, std::vector<double>(cols, 0));
     if (randomize)
         this->randomize();
 }
 
-Matrix::Matrix(int rows, int cols, const std::vector<std::vector<double>> &data) : rows(rows), cols(cols) {
+Matrix::Matrix(uint32_t rows, uint32_t cols, const std::vector<std::vector<double>> &data) : rows(rows), cols(cols) {
     auto data_deep_copy = std::vector<std::vector<double>>(rows, std::vector<double>(cols, 0));
     for (int i = 0; i < rows; i++)
         for (int j = 0; j < cols; j++)
@@ -53,17 +53,27 @@ void Matrix::print() const {
             std::cout << col << " ";
         std::cout << std::endl;
     }
+    std::cout << std::endl;
 }
 
-void Matrix::set_value(int row, int col, double value) {
+void Matrix::set_value(uint32_t row, uint32_t col, double value) {
     this->data[row][col] = value;
+}
+
+void Matrix::set_row(uint32_t row, const std::vector<double> &values) {
+    this->data[row] = values;
+}
+
+void Matrix::set_col(uint32_t col, const std::vector<double> &values) {
+    for (int i = 0; i < this->rows; i++)
+        this->data[i][col] = values[i];
 }
 
 void Matrix::set_values(const std::vector<std::vector<double>> &values) {
     this->data = values;
 }
 
-double Matrix::get_value(int row, int col) const {
+double Matrix::get_value(uint32_t row, uint32_t col) const {
     return this->data[row][col];
 }
 
@@ -94,10 +104,12 @@ Matrix &Matrix::operator=(Matrix &&other) noexcept {
 Matrix Matrix::operator*(const Matrix &other) const {
     if (this->cols != other.rows)
         throw std::runtime_error("Matrix multiplication error: incompatible dimensions");
-    auto new_data = std::vector<std::vector<double>>(this->rows, std::vector<double>(other.cols, 0));
+
+    auto result = std::vector < std::vector < double >> (this->rows, std::vector<double>(other.cols, 0));
     for (int i = 0; i < this->rows; i++)
         for (int j = 0; j < other.cols; j++)
             for (int k = 0; k < this->cols; k++)
-                new_data[i][j] += this->data[i][k] * other.data[k][j];
-    return {this->rows, other.cols, new_data};
+                result[i][j] += this->data[i][k] * other.data[k][j];
+
+    return {this->rows, other.cols, result};
 }

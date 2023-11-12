@@ -2,12 +2,15 @@
 
 #include <iostream>
 #include "Layer.h"
+#include "../utils/Matrix.h"
 
 class NeuralNetwork {
 private:
     uint32_t input_size;
     uint32_t output_size;
     std::vector<std::unique_ptr<Layer>> layers;
+
+    void init_weights();
 
 public:
     NeuralNetwork(uint32_t input_size,

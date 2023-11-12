@@ -1,5 +1,13 @@
 #include "NeuralNetwork.h"
 
+void NeuralNetwork::init_weights() {
+    for (uint32_t i = 1; i < this->layers.size(); i++) {
+        auto &previous_layer = this->layers[i - 1];
+        auto &current_layer = this->layers[i];
+        current_layer->init_weights(current_layer->get_size(), previous_layer->get_size() + 1); // +1 for bias
+    }
+}
+
 NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              uint32_t output_size,
                              const std::vector<uint32_t> &hidden_layers_sizes)
@@ -9,6 +17,8 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
     for (auto &hidden_layer_size : hidden_layers_sizes)
         this->layers.emplace_back(std::make_unique<Layer>(hidden_layer_size));
     this->layers.emplace_back(std::make_unique<Layer>(this->output_size));
+
+    this->init_weights();
 }
 
 NeuralNetwork::NeuralNetwork(uint32_t input_size,
@@ -21,6 +31,8 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
     for (auto &hidden_layer_size : hidden_layers_sizes)
         this->layers.emplace_back(std::make_unique<Layer>(hidden_layer_size, activation_function));
     this->layers.emplace_back(std::make_unique<Layer>(this->output_size, activation_function));
+
+    this->init_weights();
 }
 
 NeuralNetwork::NeuralNetwork(uint32_t input_size,
@@ -33,6 +45,8 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
     for (auto &hidden_layer_size : hidden_layers_sizes)
         this->layers.emplace_back(std::make_unique<Layer>(hidden_layer_size, activation_function));
     this->layers.emplace_back(std::make_unique<Layer>(this->output_size, activation_function));
+
+    this->init_weights();
 }
 
 NeuralNetwork::~NeuralNetwork() = default;
@@ -52,12 +66,20 @@ std::vector<std::unique_ptr<Layer>> &NeuralNetwork::get_layers() {
 void NeuralNetwork::feed_forward() {
     this->layers[0]->activate();
     for (uint32_t i = 1; i < this->layers.size(); i++) {
-        auto old_outputs = this->layers[i - 1]->get_output();
-        auto new_input = 1.; /* bias */
-        for (auto &old_output: old_outputs)
-            new_input += old_output;
-        auto input_vector = std::vector<double>(this->layers[i]->get_size(), new_input);
-        this->layers[i]->set_inputs(input_vector);
-        this->layers[i]->activate();
+        auto &previous_layer = this->layers[i - 1];
+        auto &current_layer = this->layers[i];
+
+        auto inputs = previous_layer->get_output();
+        inputs.emplace_back(1); // bias
+        auto weights = current_layer->get_weights();
+
+        auto new_input = std::vector<double>(current_layer->get_size(), 0);
+        for (uint32_t j = 0; j < current_layer->get_size(); j++) {
+            for (uint32_t k = 0; k < inputs.size(); k++)
+                new_input[j] += inputs[k] * weights.get_value(j, k);
+        }
+
+        current_layer->set_inputs(new_input);
+        current_layer->activate();
     }
 }

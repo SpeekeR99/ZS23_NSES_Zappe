@@ -25,6 +25,10 @@ void Layer::activate() {
         neuron->activate();
 }
 
+void Layer::init_weights(uint32_t rows, uint32_t cols) {
+    this->weights = Matrix(rows, cols, true);
+}
+
 void Layer::set_inputs(const std::vector<double> &inputs) {
     for (uint32_t i = 0; i < this->size; i++)
         this->neurons[i]->set_input(inputs[i]);
@@ -40,6 +44,10 @@ void Layer::set_activation_function(act_func_type new_activation_function) {
         neuron->set_activation_function(new_activation_function);
 }
 
+void Layer::set_weights(Matrix &new_weights) {
+    this->weights = new_weights;
+}
+
 std::vector<double> Layer::get_output() const {
     std::vector<double> output;
     output.reserve(this->size);
@@ -50,4 +58,8 @@ std::vector<double> Layer::get_output() const {
 
 uint32_t Layer::get_size() const {
     return this->size;
+}
+
+Matrix Layer::get_weights() const {
+    return this->weights;
 }
