@@ -27,5 +27,5 @@ public:
     [[nodiscard]] std::vector<double> get_output() const;
     [[nodiscard]] std::vector<std::unique_ptr<Layer>> &get_layers();
 
-    void forward_propagation();
+    void feed_forward();
 };

@@ -49,16 +49,14 @@ std::vector<std::unique_ptr<Layer>> &NeuralNetwork::get_layers() {
     return this->layers;
 }
 
-void NeuralNetwork::forward_propagation() {
+void NeuralNetwork::feed_forward() {
     this->layers[0]->activate();
     for (uint32_t i = 1; i < this->layers.size(); i++) {
         auto old_outputs = this->layers[i - 1]->get_output();
         auto new_input = 1.; /* bias */
         for (auto &old_output: old_outputs)
             new_input += old_output;
-        auto input_vector = std::vector<double>{};
-        for (auto j = 0; j < this->layers[i]->get_size(); j++)
-            input_vector.push_back(new_input);
+        auto input_vector = std::vector<double>(this->layers[i]->get_size(), new_input);
         this->layers[i]->set_inputs(input_vector);
         this->layers[i]->activate();
     }

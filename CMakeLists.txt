@@ -12,4 +12,6 @@ add_executable(
         src/nn/Layer.h
         src/nn/NeuralNetwork.cpp
         src/nn/NeuralNetwork.h
+        src/utils/Matrix.cpp
+        src/utils/Matrix.h
 )
