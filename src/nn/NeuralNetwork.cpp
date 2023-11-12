@@ -1,15 +1,5 @@
 #include "NeuralNetwork.h"
 
-#include <random>
-
-void NeuralNetwork::init_weights() {
-    for (uint32_t i = 1; i < this->layers.size(); i++) {
-        auto &previous_layer = this->layers[i - 1];
-        auto &current_layer = this->layers[i];
-        current_layer->init_weights(current_layer->get_size(), previous_layer->get_size() + 1); // +1 for bias
-    }
-}
-
 NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              uint32_t output_size,
                              const std::vector<uint32_t> &hidden_layers_sizes,
@@ -71,6 +61,14 @@ std::vector<double> NeuralNetwork::get_output() const {
 
 std::vector<std::unique_ptr<Layer>> &NeuralNetwork::get_layers() {
     return this->layers;
+}
+
+void NeuralNetwork::init_weights() {
+    for (uint32_t i = 1; i < this->layers.size(); i++) {
+        auto &previous_layer = this->layers[i - 1];
+        auto &current_layer = this->layers[i];
+        current_layer->init_weights(current_layer->get_size(), previous_layer->get_size() + 1); // +1 for bias
+    }
 }
 
 void NeuralNetwork::feed_forward() {
@@ -158,7 +156,7 @@ void NeuralNetwork::back_propagation(const std::vector<double> &expected_output)
                 else
                     delta = current_layer_gradients[j] * this->learning_rate;
 
-                new_weights.set_value(j, k, row[k] + delta);
+                new_weights.set_value(j, k, row[k] - delta); // TODO: nevim jestli plus nebo minus
             }
         }
 
@@ -170,7 +168,7 @@ void NeuralNetwork::back_propagation(const std::vector<double> &expected_output)
 void NeuralNetwork::train(const std::vector<std::pair<std::vector<double>, std::vector<double>>> &training_data,
                           uint32_t epochs, bool verbose) {
     for (int i = 1; i <= epochs; i++) {
-        if (verbose && !(i % 1000))
+        if (verbose && !(i % 100))
             std::cout << "Epoch: " << i << " Error: " << this->error << std::endl;
 
         auto shuffled_training_data = training_data;

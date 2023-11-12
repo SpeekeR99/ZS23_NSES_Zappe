@@ -14,4 +14,6 @@ add_executable(
         src/nn/NeuralNetwork.h
         src/utils/Matrix.cpp
         src/utils/Matrix.h
+        src/utils/DataLoader.cpp
+        src/utils/DataLoader.h
 )

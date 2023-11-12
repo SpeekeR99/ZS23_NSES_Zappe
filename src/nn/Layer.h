@@ -14,7 +14,6 @@ enum class act_func_type {
     step,
     sign,
     tanh,
-    softmax,
     number_of_activation_functions
 };
 
