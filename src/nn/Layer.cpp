@@ -48,10 +48,6 @@ std::vector<double> Layer::get_output() const {
     return output;
 }
 
-double Layer::get_bias() const {
-    return this->bias;
-}
-
 uint32_t Layer::get_size() const {
     return this->size;
 }

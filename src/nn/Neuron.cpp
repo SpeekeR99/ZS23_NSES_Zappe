@@ -9,16 +9,16 @@ act_func predefined_activation_functions[] = {
         [](double x) -> double { return tanh(x); }              /* tanh */
 };
 
-Neuron::Neuron(double input) : input(input), output(0), activation_function(nullptr) {
+Neuron::Neuron(double input) : input(input), output(input), activation_function(nullptr) {
     /* empty */
 }
 
-Neuron::Neuron(double input, act_func activation_function) : input(input), output(0),
+Neuron::Neuron(double input, act_func activation_function) : input(input), output(input),
                                                              activation_function(activation_function) {
     /* empty */
 }
 
-Neuron::Neuron(double input, act_func_type activation_function) : input(input), output(0), activation_function(
+Neuron::Neuron(double input, act_func_type activation_function) : input(input), output(input), activation_function(
         predefined_activation_functions[static_cast<int>(activation_function)]) {
     /* empty */
 }
