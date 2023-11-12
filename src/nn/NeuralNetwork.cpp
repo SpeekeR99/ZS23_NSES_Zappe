@@ -13,8 +13,9 @@ void NeuralNetwork::init_weights() {
 NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              uint32_t output_size,
                              const std::vector<uint32_t> &hidden_layers_sizes,
-                             double learning_rate)
-                             : input_size(input_size), output_size(output_size), learning_rate(learning_rate) {
+                             double learning_rate,
+                             bool softmax_output)
+                             : input_size(input_size), output_size(output_size), learning_rate(learning_rate), softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
     this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -28,8 +29,9 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              uint32_t output_size,
                              const std::vector<uint32_t> &hidden_layers_sizes,
                              act_func activation_function,
-                             double learning_rate)
-                             : input_size(input_size), output_size(output_size), learning_rate(learning_rate) {
+                             double learning_rate,
+                             bool softmax_output)
+                             : input_size(input_size), output_size(output_size), learning_rate(learning_rate), softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
     this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -43,8 +45,9 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              uint32_t output_size,
                              const std::vector<uint32_t> &hidden_layers_sizes,
                              act_func_type activation_function,
-                             double learning_rate)
-                             : input_size(input_size), output_size(output_size), learning_rate(learning_rate) {
+                             double learning_rate,
+                             bool softmax_output)
+                             : input_size(input_size), output_size(output_size), learning_rate(learning_rate), softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
     this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -61,6 +64,8 @@ void NeuralNetwork::set_inputs(const std::vector<double> &inputs) {
 }
 
 std::vector<double> NeuralNetwork::get_output() const {
+    if (this->softmax_output)
+        return this->layers.back()->get_softmax_output();
     return this->layers.back()->get_output();
 }
 
@@ -95,16 +100,16 @@ void NeuralNetwork::back_propagation(const std::vector<double> &expected_output)
 
     /* Calculate overall error */
     this->error = 0.;
-    auto predicted_output = this->get_output();
-    for (uint32_t i = 0; i < predicted_output.size(); i++) {
-        auto delta = expected_output[i] - predicted_output[i];
+    auto nn_output = this->get_output();
+    for (uint32_t i = 0; i < nn_output.size(); i++) {
+        auto delta = expected_output[i] - nn_output[i];
         this->error += delta * delta;
     }
-    this->error /= (2 * predicted_output.size());
+    this->error /= (2 * nn_output.size());
 
     /* Calculate output layer gradients */
     auto &output_layer = this->layers.back();
-    auto output_layer_output = output_layer->get_output();
+    auto output_layer_output = this->get_output();
     auto output_layer_derivative_output = output_layer->get_derivative_output();
     auto output_layer_gradients = std::vector<double>(output_layer->get_size(), 0);
 
@@ -163,9 +168,11 @@ void NeuralNetwork::back_propagation(const std::vector<double> &expected_output)
 }
 
 void NeuralNetwork::train(const std::vector<std::pair<std::vector<double>, std::vector<double>>> &training_data,
-                          uint32_t epochs) {
-    for (int i = 0; i < epochs; i++) {
-        /* shuffle training data */
+                          uint32_t epochs, bool verbose) {
+    for (int i = 1; i <= epochs; i++) {
+        if (verbose && !(i % 1000))
+            std::cout << "Epoch: " << i << " Error: " << this->error << std::endl;
+
         auto shuffled_training_data = training_data;
         std::shuffle(shuffled_training_data.begin(), shuffled_training_data.end(), std::mt19937(std::random_device()()));
 
