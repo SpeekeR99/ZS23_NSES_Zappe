@@ -28,6 +28,8 @@ public:
     void set_col(uint32_t col, const std::vector<double> &values);
     void set_values(const std::vector<std::vector<double>> &values);
     [[nodiscard]] double get_value(uint32_t row, uint32_t col) const;
+    [[nodiscard]] std::vector<double> get_row(uint32_t row) const;
+    [[nodiscard]] std::vector<double> get_col(uint32_t col) const;
     [[nodiscard]] std::vector<std::vector<double>> get_values() const;
 
     Matrix &operator=(const Matrix &other) noexcept;

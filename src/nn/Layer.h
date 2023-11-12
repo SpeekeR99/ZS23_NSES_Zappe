@@ -27,6 +27,7 @@ public:
     void set_activation_function(act_func_type new_activation_function);
     void set_weights(Matrix &new_weights);
     [[nodiscard]] std::vector<double> get_output() const;
+    [[nodiscard]] std::vector<double> get_derivative_output() const;
     [[nodiscard]] uint32_t get_size() const;
     [[nodiscard]] Matrix get_weights() const;
 };

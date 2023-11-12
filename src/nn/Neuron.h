@@ -9,14 +9,17 @@ enum class act_func_type {
     sigmoid,
     step,
     sign,
-    tanh
+    tanh,
+    number_of_activation_functions
 };
 
 class Neuron {
 private:
     double input;
     double output;
+    double derivative_output;
     act_func activation_function;
+    act_func derivative_activation_function;
 
 public:
     explicit Neuron(double input);
@@ -30,4 +33,5 @@ public:
     void set_activation_function(act_func new_activation_function);
     void set_activation_function(act_func_type new_activation_function);
     [[nodiscard]] double get_output() const;
+    [[nodiscard]] double get_derivative_output() const;
 };

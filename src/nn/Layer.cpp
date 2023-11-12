@@ -56,6 +56,14 @@ std::vector<double> Layer::get_output() const {
     return output;
 }
 
+std::vector<double> Layer::get_derivative_output() const {
+    std::vector<double> derivative_output;
+    derivative_output.reserve(this->size);
+    for (auto &neuron : this->neurons)
+        derivative_output.push_back(neuron->get_derivative_output());
+    return derivative_output;
+}
+
 uint32_t Layer::get_size() const {
     return this->size;
 }

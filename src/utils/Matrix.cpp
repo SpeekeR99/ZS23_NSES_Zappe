@@ -77,6 +77,18 @@ double Matrix::get_value(uint32_t row, uint32_t col) const {
     return this->data[row][col];
 }
 
+std::vector<double> Matrix::get_row(uint32_t row) const {
+    return this->data[row];
+}
+
+std::vector<double> Matrix::get_col(uint32_t col) const {
+    std::vector<double> column;
+    column.reserve(this->rows);
+    for (int i = 0; i < this->rows; i++)
+        column.push_back(this->data[i][col]);
+    return column;
+}
+
 std::vector<std::vector<double>> Matrix::get_values() const {
     return this->data;
 }
