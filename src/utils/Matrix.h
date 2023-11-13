@@ -29,8 +29,8 @@ public:
     void add_row(const std::vector<double> &values);
     void add_col(const std::vector<double> &values);
     [[nodiscard]] double get_value(uint32_t row, uint32_t col) const;
-    [[nodiscard]] Matrix &get_row(uint32_t row) const;
-    [[nodiscard]] Matrix &get_col(uint32_t col) const;
+    [[nodiscard]] Matrix get_row(uint32_t row) const;
+    [[nodiscard]] Matrix get_col(uint32_t col) const;
     [[nodiscard]] std::vector<std::vector<double>> get_values() const;
     [[nodiscard]] std::vector<uint32_t> get_dims() const;
 

@@ -78,20 +78,20 @@ double Matrix::get_value(uint32_t row, uint32_t col) const {
     return this->data[row][col];
 }
 
-Matrix &Matrix::get_row(uint32_t row) const {
+Matrix Matrix::get_row(uint32_t row) const {
     auto row_data = this->data[row];
     auto new_matrix_data = std::vector<std::vector<double>>(1, row_data);
-    static Matrix result(1, this->cols, new_matrix_data);
+    Matrix result(1, this->cols, new_matrix_data);
     return result;
 }
 
-Matrix &Matrix::get_col(uint32_t col) const {
+Matrix Matrix::get_col(uint32_t col) const {
     std::vector<double> col_data;
     col_data.reserve(this->rows);
     for (int i = 0; i < this->rows; i++)
         col_data.push_back(this->data[i][col]);
     auto new_matrix_data = std::vector<std::vector<double>>(this->rows, col_data);
-    static Matrix result(this->rows, 1, new_matrix_data);
+    Matrix result(this->rows, 1, new_matrix_data);
     return result;
 }
 

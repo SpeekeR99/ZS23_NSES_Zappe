@@ -4,8 +4,9 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              uint32_t output_size,
                              const std::vector<uint32_t> &hidden_layers_sizes,
                              double learning_rate,
+                             uint32_t batch_size,
                              bool softmax_output)
-                             : input_size(input_size), output_size(output_size), learning_rate(learning_rate), softmax_output(softmax_output) {
+                             : input_size(input_size), output_size(output_size), training_error(1, 1), learning_rate(learning_rate), batch_size(batch_size), gradient(0, 0), softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
     this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -13,6 +14,7 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
     this->layers.emplace_back(std::make_unique<Layer>(this->output_size));
 
     this->init_weights();
+    this->reset_gradient();
 }
 
 NeuralNetwork::NeuralNetwork(uint32_t input_size,
@@ -20,8 +22,9 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              const std::vector<uint32_t> &hidden_layers_sizes,
                              act_func activation_function,
                              double learning_rate,
+                             uint32_t batch_size,
                              bool softmax_output)
-                             : input_size(input_size), output_size(output_size), learning_rate(learning_rate), softmax_output(softmax_output) {
+                             : input_size(input_size), output_size(output_size), training_error(1, 1), learning_rate(learning_rate), batch_size(batch_size), gradient(0, 0), softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
     this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -29,6 +32,7 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
     this->layers.emplace_back(std::make_unique<Layer>(this->output_size, activation_function));
 
     this->init_weights();
+    this->reset_gradient();
 }
 
 NeuralNetwork::NeuralNetwork(uint32_t input_size,
@@ -36,8 +40,9 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              const std::vector<uint32_t> &hidden_layers_sizes,
                              act_func_type activation_function,
                              double learning_rate,
+                             uint32_t batch_size,
                              bool softmax_output)
-                             : input_size(input_size), output_size(output_size), learning_rate(learning_rate), softmax_output(softmax_output) {
+                             : input_size(input_size), output_size(output_size), training_error(1, 1), learning_rate(learning_rate), batch_size(batch_size), gradient(0, 0), softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
     this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -45,11 +50,12 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
     this->layers.emplace_back(std::make_unique<Layer>(this->output_size, activation_function));
 
     this->init_weights();
+    this->reset_gradient();
 }
 
 NeuralNetwork::~NeuralNetwork() = default;
 
-void NeuralNetwork::set_inputs(const Matrix &inputs) {
+void NeuralNetwork::set_input(const Matrix &inputs) {
     auto input = inputs;
     if (input.get_dims()[1] != 1 and input.get_dims()[0] == 1)
         input = input.transpose();
@@ -72,6 +78,10 @@ void NeuralNetwork::init_weights() {
         auto &current_layer = this->layers[i];
         current_layer->init_weights(current_layer->get_size(), previous_layer->get_size() + 1); // +1 for bias
     }
+}
+
+void NeuralNetwork::reset_gradient() {
+    this->gradient = Matrix(this->output_size, 1, false);
 }
 
 void NeuralNetwork::feed_forward() {
@@ -165,23 +175,49 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
 
 void NeuralNetwork::train(x_y_matrix &training_data, uint32_t epochs, bool verbose) {
     for (int i = 1; i <= epochs; i++) {
-        if (verbose && !(i % 100))
-            std::cout << "Epoch: " << i << " Error: " << this->error << std::endl;
-
         auto shuffled_indices = std::vector<uint32_t>(training_data.first.get_dims()[0]);
         std::iota(shuffled_indices.begin(), shuffled_indices.end(), 0);
         std::shuffle(shuffled_indices.begin(), shuffled_indices.end(), std::mt19937(std::random_device()()));
 
-        for (auto &index : shuffled_indices) {
-            this->set_inputs(training_data.first.get_row(index));
-            this->feed_forward();
-            this->back_propagation(training_data.second.get_row(index));
+        auto batches = std::vector<std::vector<uint32_t>>(training_data.first.get_dims()[0] / this->batch_size,
+                                                          std::vector<uint32_t>(this->batch_size));
+        for (uint32_t j = 0; j < training_data.first.get_dims()[0] / this->batch_size; j++)
+            for (uint32_t k = 0; k < this->batch_size; k++) {
+                if (j * this->batch_size + k >= training_data.first.get_dims()[0])
+                    break;
+                batches[j][k] = shuffled_indices[j * this->batch_size + k];
+            }
+
+        for (auto &batch : batches) {
+            this->reset_gradient();
+
+            auto batch_inputs = Matrix(batch.size(), training_data.first.get_dims()[1], false);
+            auto batch_outputs = Matrix(batch.size(), training_data.second.get_dims()[1], false);
+
+            for (uint32_t j = 0; j < batch.size(); j++) {
+                auto asdf = training_data.first.get_row(batch[j]);
+                batch_inputs.set_row(j, training_data.first.get_row(batch[j]).get_values()[0]);
+                batch_outputs.set_row(j, training_data.second.get_row(batch[j]).get_values()[0]);
+            }
+
+            for (uint32_t j = 0; j < batch.size(); j++) {
+                this->set_input(batch_inputs.get_row(j));
+                this->feed_forward();
+                this->back_propagation(batch_outputs.get_row(j));
+            }
+
+//            this->update_weights();
         }
+
+        if (verbose)
+            std::cout << "Epoch: " << i << " Error: "
+                      << this->training_error.get_value(0, this->training_error.get_dims()[1] - 1) << std::endl;
+
     }
 }
 
 Matrix NeuralNetwork::predict(const Matrix &inputs) {
-    this->set_inputs(inputs);
+    this->set_input(inputs);
     this->feed_forward();
     return this->get_output();
 }
