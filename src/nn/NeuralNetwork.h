@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "Layer.h"
 #include "../utils/Matrix.h"
+#include "../utils/DataLoader.h"
 
 class NeuralNetwork {
 private:
@@ -15,10 +16,10 @@ private:
     bool softmax_output = false;
 
     void init_weights();
-    void feed_forward();
-    void back_propagation(const std::vector<double> &expected_output);
+    void back_propagation(const Matrix &expected_output);
 
 public:
+    void feed_forward();
     NeuralNetwork(uint32_t input_size,
                   uint32_t output_size,
                   const std::vector<uint32_t> &hidden_layers_sizes,
@@ -38,10 +39,10 @@ public:
                   bool softmax_output = false);
     ~NeuralNetwork();
 
-    void set_inputs(const std::vector<double> &inputs);
-    [[nodiscard]] std::vector<double> get_output() const;
+    void set_inputs(const Matrix &inputs);
+    [[nodiscard]] Matrix get_output() const;
     [[nodiscard]] std::vector<std::unique_ptr<Layer>> &get_layers();
 
-    void train(const std::vector<std::pair<std::vector<double>, std::vector<double>>> &training_data, uint32_t epochs, bool verbose = false);
-    std::vector<double> predict(const std::vector<double> &inputs);
+    void train(x_y_matrix &training_data, uint32_t epochs, bool verbose = false);
+    Matrix predict(const Matrix &inputs);
 };

@@ -54,11 +54,15 @@ void Layer::activate() {
 
 void Layer::init_weights(uint32_t rows, uint32_t cols) {
     this->weights = Matrix(rows, cols, true);
+    /* debugging, initialize weights to 1 */
+    for (uint32_t i = 0; i < rows; i++)
+        for (uint32_t j = 0; j < cols; j++)
+            this->weights.set_value(i, j, 1);
 }
 
-void Layer::set_inputs(const std::vector<double> &inputs) {
+void Layer::set_inputs(const Matrix &inputs) {
     for (uint32_t i = 0; i < this->size; i++)
-        this->neurons[i]->set_input(inputs[i]);
+        this->neurons[i]->set_input(inputs.get_value(i, 0));
 }
 
 void Layer::set_activation_function(act_func new_activation_function) {
@@ -81,33 +85,42 @@ void Layer::set_weights(Matrix &new_weights) {
     this->weights = new_weights;
 }
 
-std::vector<double> Layer::get_output() const {
-    std::vector<double> output;
-    output.reserve(this->size);
-    for (auto &neuron : this->neurons)
-        output.push_back(neuron->get_output());
+Matrix Layer::get_output() const {
+    Matrix output(this->size, 1, false);
+    for (uint32_t i = 0; i < this->size; i++)
+        output.set_value(i, 0, this->neurons[i]->get_output());
     return output;
 }
 
-std::vector<double> Layer::get_softmax_output() const {
-    std::vector<double> softmax_output;
-    softmax_output.reserve(this->size);
-    for (auto &neuron : this->neurons)
-        softmax_output.push_back(neuron->get_input());
+Matrix Layer::get_softmax_output() const {
+    Matrix softmax_output(this->size, 1, false);
+    for (uint32_t i = 0; i < this->size; i++)
+        softmax_output.set_value(i, 0, this->neurons[i]->get_input());
     double sum = 0;
-    for (auto &output : softmax_output)
-        sum += exp(output);
-    for (auto &output : softmax_output)
-        output = exp(output) / sum;
+    for (uint32_t i = 0; i < this->size; i++)
+        sum += exp(softmax_output.get_value(i, 0));
+    for (uint32_t i = 0; i < this->size; i++)
+        softmax_output.set_value(i, 0, exp(softmax_output.get_value(i, 0)) / sum);
     return softmax_output;
 }
 
-std::vector<double> Layer::get_derivative_output() const {
-    std::vector<double> derivative_output;
-    derivative_output.reserve(this->size);
-    for (auto &neuron : this->neurons)
-        derivative_output.push_back(neuron->get_derivative_output());
+Matrix Layer::get_derivative_output() const {
+    Matrix derivative_output(this->size, 1, false);
+    for (uint32_t i = 0; i < this->size; i++)
+        derivative_output.set_value(i, 0, this->neurons[i]->get_derivative_output());
     return derivative_output;
+}
+
+Matrix Layer::get_softmax_derivative_output() const {
+    Matrix softmax_derivative_output(this->size, this->size, false);
+    auto softmax_output = this->get_softmax_output();
+    for (uint32_t i = 0; i < this->size; i++)
+        for (uint32_t j = 0; j < this->size; j++)
+            if (i == j)
+                softmax_derivative_output.set_value(i, j, softmax_output.get_value(i, 0) * (1 - softmax_output.get_value(i, 0)));
+            else
+                softmax_derivative_output.set_value(i, j, -softmax_output.get_value(i, 0) * softmax_output.get_value(j, 0));
+    return softmax_derivative_output;
 }
 
 uint32_t Layer::get_size() const {

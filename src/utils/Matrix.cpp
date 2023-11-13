@@ -47,15 +47,6 @@ void Matrix::randomize() {
             col = dist(gen);
 }
 
-void Matrix::print() const {
-    for (const auto &row : this->data) {
-        for (const auto &col : row)
-            std::cout << col << " ";
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-}
-
 void Matrix::set_value(uint32_t row, uint32_t col, double value) {
     this->data[row][col] = value;
 }
@@ -73,24 +64,44 @@ void Matrix::set_values(const std::vector<std::vector<double>> &values) {
     this->data = values;
 }
 
+void Matrix::add_row(const std::vector<double> &values) {
+    this->data.push_back(values);
+    this->rows++;
+}
+
+void Matrix::add_col(const std::vector<double> &values) {
+    for (int i = 0; i < this->rows; i++)
+        this->data[i].push_back(values[i]);
+    this->cols++;
+}
+
 double Matrix::get_value(uint32_t row, uint32_t col) const {
     return this->data[row][col];
 }
 
-std::vector<double> Matrix::get_row(uint32_t row) const {
-    return this->data[row];
+Matrix &Matrix::get_row(uint32_t row) const {
+    auto row_data = this->data[row];
+    auto new_matrix_data = std::vector<std::vector<double>>(1, row_data);
+    static Matrix result(1, this->cols, new_matrix_data);
+    return result;
 }
 
-std::vector<double> Matrix::get_col(uint32_t col) const {
-    std::vector<double> column;
-    column.reserve(this->rows);
+Matrix &Matrix::get_col(uint32_t col) const {
+    std::vector<double> col_data;
+    col_data.reserve(this->rows);
     for (int i = 0; i < this->rows; i++)
-        column.push_back(this->data[i][col]);
-    return column;
+        col_data.push_back(this->data[i][col]);
+    auto new_matrix_data = std::vector<std::vector<double>>(this->rows, col_data);
+    static Matrix result(this->rows, 1, new_matrix_data);
+    return result;
 }
 
 std::vector<std::vector<double>> Matrix::get_values() const {
     return this->data;
+}
+
+std::vector<uint32_t> Matrix::get_dims() const {
+    return {this->rows, this->cols};
 }
 
 Matrix &Matrix::operator=(const Matrix &other) noexcept {
@@ -113,15 +124,32 @@ Matrix &Matrix::operator=(Matrix &&other) noexcept {
     return *this;
 }
 
+Matrix Matrix::operator+(const Matrix &other) const {
+    auto result = std::vector<std::vector<double>>(this->rows, std::vector<double>(this->cols, 0));
+    for (int i = 0; i < this->rows; i++)
+        for (int j = 0; j < this->cols; j++)
+            result[i][j] = this->data[i][j] + other.data[i][j];
+    return {this->rows, this->cols, result};
+}
+
 Matrix Matrix::operator*(const Matrix &other) const {
     if (this->cols != other.rows)
         throw std::runtime_error("Matrix multiplication error: incompatible dimensions");
 
-    auto result = std::vector < std::vector < double >> (this->rows, std::vector<double>(other.cols, 0));
+    auto result = std::vector<std::vector<double>>(this->rows, std::vector<double>(other.cols, 0));
     for (int i = 0; i < this->rows; i++)
         for (int j = 0; j < other.cols; j++)
             for (int k = 0; k < this->cols; k++)
                 result[i][j] += this->data[i][k] * other.data[k][j];
 
     return {this->rows, other.cols, result};
+}
+
+std::ostream &operator<<(std::ostream &os, const Matrix &matrix) {
+    for (const auto &row : matrix.data) {
+        for (const auto &col : row)
+            os << col << " ";
+        os << std::endl;
+    }
+    return os;
 }

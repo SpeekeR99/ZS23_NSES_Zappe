@@ -55,3 +55,16 @@ x_y_pairs DataLoader::transform_y_to_one_hot(const x_y_pairs &data) {
 
     return one_hot_data;
 }
+
+x_y_matrix DataLoader::transform_to_matrices(const x_y_pairs &data) {
+    Matrix x(data.size(), data[0].first.size(), false);
+    Matrix y(data.size(), data[0].second.size(), false);
+
+    for (uint32_t i = 0; i < data.size(); i++) {
+        auto pair = data[i];
+        x.set_row(i, pair.first);
+        y.set_row(i, pair.second);
+    }
+
+    return std::make_pair(x, y);
+}
