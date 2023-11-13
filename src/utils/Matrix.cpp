@@ -46,6 +46,14 @@ void Matrix::randomize() {
             col = dist(gen);
 }
 
+Matrix Matrix::log() const {
+    auto result = std::vector<std::vector<double>>(this->rows, std::vector<double>(this->cols, 0));
+    for (int i = 0; i < this->rows; i++)
+        for (int j = 0; j < this->cols; j++)
+            result[i][j] = std::log(this->data[i][j]);
+    return {this->rows, this->cols, result};
+}
+
 void Matrix::set_value(uint32_t row, uint32_t col, double value) {
     this->data[row][col] = value;
 }
@@ -128,6 +136,14 @@ Matrix Matrix::operator+(const Matrix &other) const {
     for (int i = 0; i < this->rows; i++)
         for (int j = 0; j < this->cols; j++)
             result[i][j] = this->data[i][j] + other.data[i][j];
+    return {this->rows, this->cols, result};
+}
+
+Matrix Matrix::operator-(const Matrix &other) const {
+    auto result = std::vector<std::vector<double>>(this->rows, std::vector<double>(this->cols, 0));
+    for (int i = 0; i < this->rows; i++)
+        for (int j = 0; j < this->cols; j++)
+            result[i][j] = this->data[i][j] - other.data[i][j];
     return {this->rows, this->cols, result};
 }
 

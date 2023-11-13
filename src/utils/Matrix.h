@@ -21,6 +21,7 @@ public:
 
     [[nodiscard]] Matrix transpose() const;
     void randomize();
+    [[nodiscard]] Matrix log() const;
 
     void set_value(uint32_t row, uint32_t col, double value);
     void set_row(uint32_t row, const std::vector<double> &values);
@@ -37,6 +38,7 @@ public:
     Matrix &operator=(const Matrix &other) noexcept;
     Matrix &operator=(Matrix &&other) noexcept;
     Matrix operator+(const Matrix &other) const;
+    Matrix operator-(const Matrix &other) const;
     Matrix operator*(const Matrix &other) const;
     friend std::ostream &operator<<(std::ostream &os, const Matrix &matrix);
 };

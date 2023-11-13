@@ -17,11 +17,14 @@ private:
     uint32_t batch_size;
     bool softmax_output;
 
-    void init_weights();
-    void reset_gradient();
     void set_input(const Matrix &inputs);
     [[nodiscard]] Matrix get_output() const;
+
+    void init_weights();
+    void reset_gradient();
+    double loss(const Matrix &expected_output);
     void back_propagation(const Matrix &expected_output);
+    void update_weights();
 
 public:
     void feed_forward();
