@@ -13,7 +13,7 @@ private:
     std::vector<std::unique_ptr<Layer>> layers;
     Matrix training_error;
     double learning_rate;
-    Matrix gradient;
+    std::vector<Matrix> gradient;
     uint32_t batch_size;
     bool softmax_output;
 

@@ -160,6 +160,15 @@ Matrix Matrix::operator*(const Matrix &other) const {
     return {this->rows, other.cols, result};
 }
 
+Matrix Matrix::operator*(double scalar) const {
+    auto result = std::vector<std::vector<double>>(this->rows, std::vector<double>(this->cols, 0));
+    for (int i = 0; i < this->rows; i++)
+        for (int j = 0; j < this->cols; j++)
+            result[i][j] = this->data[i][j] * scalar;
+    return {this->rows, this->cols, result};
+}
+
+
 std::ostream &operator<<(std::ostream &os, const Matrix &matrix) {
     for (const auto &row : matrix.data) {
         for (const auto &col : row)

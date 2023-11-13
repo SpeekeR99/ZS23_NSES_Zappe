@@ -6,7 +6,7 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              double learning_rate,
                              uint32_t batch_size,
                              bool softmax_output)
-                             : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient(0, 0), softmax_output(softmax_output) {
+                             : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient{}, softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
     this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -24,7 +24,7 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              double learning_rate,
                              uint32_t batch_size,
                              bool softmax_output)
-                             : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient(0, 0), softmax_output(softmax_output) {
+                             : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient{}, softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
     this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -42,7 +42,7 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              double learning_rate,
                              uint32_t batch_size,
                              bool softmax_output)
-                             : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient(0, 0), softmax_output(softmax_output) {
+                             : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient{}, softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
     this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -81,7 +81,14 @@ void NeuralNetwork::init_weights() {
 }
 
 void NeuralNetwork::reset_gradient() {
-    this->gradient = Matrix(0, this->output_size);
+    this->gradient.clear();
+    for (uint32_t i = 1; i < this->layers.size(); i++) {
+        auto &current_layer = this->layers[i];
+        if (i == this->layers.size() - 1)
+            this->gradient.emplace_back(0, current_layer->get_size());
+        else
+            this->gradient.emplace_back(0, current_layer->get_size() + 1); // +1 for bias
+    }
 }
 
 double NeuralNetwork::loss(const Matrix &expected_output) {
@@ -115,15 +122,15 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
     auto output_layer_output = this->get_output(); /* gets softmax output if softmax_output is true */
     auto output_layer_derivative_output = output_layer->get_derivative_output();
 
-    Matrix output_layer_gradients = (expected_output - output_layer_output);
+    Matrix output_layer_gradients = (expected_output - output_layer_output.transpose());
     if (!(this->softmax_output)) { /* Mean squared error */
-        for (uint32_t i = 0; i < output_layer_gradients.get_dims()[0]; i++) {
-            auto value = output_layer_gradients.get_value(i, 0) * output_layer_derivative_output.get_value(i, 0);
-            output_layer_gradients.set_value(i, 0, value);
+        for (uint32_t i = 0; i < output_layer_gradients.get_dims()[1]; i++) {
+            auto value = output_layer_gradients.get_value(0, i) * output_layer_derivative_output.get_value(i, 0);
+            output_layer_gradients.set_value(0, i, value);
         }
     }
 
-    this->gradient.add_row(output_layer_gradients.get_values()[0]);
+    this->gradient[this->gradient.size() - 1].add_row(output_layer_gradients.get_values()[0]);
 
     /* Calculate hidden layers gradients */
     for (uint32_t i = this->layers.size() - 2; i > 0; i--) {
@@ -132,7 +139,7 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
         current_layer_derivative_output.add_row({1.}); // bias
 
         auto &next_layer = this->layers[i + 1];
-        auto next_layer_gradients = this->gradient.get_row(this->gradient.get_dims()[0] - 1);
+        auto next_layer_gradients = this->gradient[i].get_row(this->gradient[i].get_dims()[0] - 1);
         auto next_layer_weights = next_layer->get_weights();
 
         auto current_layer_gradients = next_layer_gradients * next_layer_weights;
@@ -142,36 +149,46 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
             current_layer_gradients.set_value(j, 0, value);
         }
 
-        this->gradient.add_row(current_layer_gradients.get_values()[0]);
+        this->gradient[i - 1].add_row(current_layer_gradients.get_values()[0]);
     }
 }
 
 void NeuralNetwork::update_weights() {
-    /* TODO: tohle je ze stareho back prop */
-//    for (uint32_t i = 1; i < this->layers.size(); i++) {
-//        auto &current_layer = this->layers[i];
-//        auto current_layer_weights = current_layer->get_weights();
-//        auto current_layer_gradients = gradients[this->layers.size() - i - 1];
-//
-//        auto &previous_layer = this->layers[i - 1];
-//        auto previous_layer_output = previous_layer->get_output();
-//
-//        auto new_weights = Matrix(current_layer->get_size(), previous_layer->get_size() + 1, false);
-//        for (uint32_t j = 0; j < current_layer->get_size(); j++) {
-//            auto row = current_layer_weights.get_row(j);
-//            for (uint32_t k = 0; k < previous_layer->get_size() + 1; k++) {
-//                double delta;
-//                if (k != previous_layer->get_size())
-//                    delta = current_layer_gradients[j] * previous_layer_output[k] * this->learning_rate;
-//                else
-//                    delta = current_layer_gradients[j] * this->learning_rate;
-//
-//                new_weights.set_value(j, k, row[k] - delta); // TODO: nevim jestli plus nebo minus
-//            }
-//        }
-//
-//        current_layer->set_weights(new_weights);
-//    }
+    std::vector<Matrix> averaged_gradients = {};
+
+    for (auto &g : this->gradient) {
+        auto averaged_gradient = Matrix(1, g.get_dims()[1], false);
+
+        for (uint32_t i = 0; i < g.get_dims()[0]; i++) {
+            auto row = g.get_row(i);
+
+            for (uint32_t j = 0; j < row.get_dims()[1]; j++) {
+                auto value = averaged_gradient.get_value(0, j) + row.get_value(0, j);
+                averaged_gradient.set_value(0, j, value);
+            }
+        }
+
+        for (uint32_t i = 0; i < averaged_gradient.get_dims()[1]; i++) {
+            auto value = averaged_gradient.get_value(0, i) / g.get_dims()[0];
+            averaged_gradient.set_value(0, i, value);
+        }
+
+        averaged_gradients.emplace_back(averaged_gradient);
+    }
+
+    for (auto &g : averaged_gradients)
+        std::cout << g << std::endl;
+
+    for (uint32_t i = 1; i < this->layers.size(); i++) {
+        auto &current_layer = this->layers[i];
+        auto &previous_layer = this->layers[i - 1];
+
+        auto weights = current_layer->get_weights();
+        auto gradients = averaged_gradients[i - 1];
+
+        auto new_weights = weights + (gradients.transpose() * this->learning_rate);
+        current_layer->set_weights(new_weights);
+    }
 }
 
 void NeuralNetwork::train(x_y_matrix &training_data, uint32_t epochs, bool verbose) {

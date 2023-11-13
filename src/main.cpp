@@ -10,10 +10,6 @@ int main() {
     training_data_temp = DataLoader::transform_y_to_one_hot(training_data_temp);
     x_y_matrix training_data = DataLoader::transform_to_matrices(training_data_temp);
 
-    Matrix input(1, 2, {{1, 2}});
-    auto output = nn->predict(input);
-    std::cout << output << std::endl;
-
     nn->train(training_data, 10, true);
 
     return EXIT_SUCCESS;
