@@ -30,13 +30,12 @@ Matrix::Matrix(Matrix &&other) noexcept : rows(other.rows), cols(other.cols) {
 
 Matrix::~Matrix() = default;
 
-Matrix &Matrix::transpose() {
+Matrix Matrix::transpose() const {
     std::vector<std::vector<double>> transposed_data(this->cols, std::vector<double>(this->rows, 0));
     for (int i = 0; i < this->rows; i++)
         for (int j = 0; j < this->cols; j++)
             transposed_data[j][i] = this->data[i][j];
-    static Matrix transposed_matrix(this->cols, this->rows, transposed_data);
-    return transposed_matrix;
+    return {this->cols, this->rows, transposed_data};
 }
 
 void Matrix::randomize() {

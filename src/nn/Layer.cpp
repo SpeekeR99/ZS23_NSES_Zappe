@@ -55,9 +55,9 @@ void Layer::activate() {
 void Layer::init_weights(uint32_t rows, uint32_t cols) {
     this->weights = Matrix(rows, cols, true);
     /* debugging, initialize weights to 1 */
-    for (uint32_t i = 0; i < rows; i++)
-        for (uint32_t j = 0; j < cols; j++)
-            this->weights.set_value(i, j, 1);
+//    for (uint32_t i = 0; i < rows; i++)
+//        for (uint32_t j = 0; j < cols; j++)
+//            this->weights.set_value(i, j, 1);
 }
 
 void Layer::set_inputs(const Matrix &inputs) {

@@ -50,7 +50,10 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
 NeuralNetwork::~NeuralNetwork() = default;
 
 void NeuralNetwork::set_inputs(const Matrix &inputs) {
-    this->layers[0]->set_inputs(inputs);
+    auto input = inputs;
+    if (input.get_dims()[1] != 1 and input.get_dims()[0] == 1)
+        input = input.transpose();
+    this->layers[0]->set_inputs(input);
 }
 
 Matrix NeuralNetwork::get_output() const {

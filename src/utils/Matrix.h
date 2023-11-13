@@ -19,7 +19,7 @@ public:
     Matrix(Matrix &&other) noexcept;
     ~Matrix();
 
-    Matrix &transpose();
+    [[nodiscard]] Matrix transpose() const;
     void randomize();
 
     void set_value(uint32_t row, uint32_t col, double value);
