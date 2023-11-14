@@ -82,6 +82,18 @@ void Matrix::add_col(const std::vector<double> &values) {
     this->cols++;
 }
 
+void Matrix::remove_row(uint32_t row_idx) {
+    this->data.erase(this->data.begin() + row_idx);
+    this->rows--;
+}
+
+void Matrix::remove_col(uint32_t col_idx) {
+    for (int i = 0; i < this->rows; i++)
+        this->data[i].erase(this->data[i].begin() + col_idx);
+    this->cols--;
+}
+
+
 double Matrix::get_value(uint32_t row, uint32_t col) const {
     return this->data[row][col];
 }
@@ -148,8 +160,10 @@ Matrix Matrix::operator-(const Matrix &other) const {
 }
 
 Matrix Matrix::operator*(const Matrix &other) const {
-    if (this->cols != other.rows)
+    if (this->cols != other.rows) {
+        std::cerr << this->rows << " x " << this->cols << " * " << other.rows << " x " << other.cols << std::endl;
         throw std::runtime_error("Matrix multiplication error: incompatible dimensions");
+    }
 
     auto result = std::vector<std::vector<double>>(this->rows, std::vector<double>(other.cols, 0));
     for (int i = 0; i < this->rows; i++)
