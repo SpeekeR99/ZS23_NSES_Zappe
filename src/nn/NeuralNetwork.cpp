@@ -132,8 +132,8 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
     auto output_layer_derivative_output = output_layer->get_derivative_output();
 
     auto &previous_layer = this->layers[this->layers.size() - 2];
-    auto previous_layer_derivative_output = previous_layer->get_derivative_output();
-    previous_layer_derivative_output.add_row({1.}); // bias
+    auto previous_layer_output = previous_layer->get_output();
+    previous_layer_output.add_row({1.}); // bias
 
 //    std::cout << "EXPECTED OUTPUT" << std::endl;
 //    std::cout << expected_output << std::endl;
@@ -153,7 +153,7 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
     }
 
     cached_gradients.emplace_back(output_layer_gradients);
-    output_layer_gradients = output_layer_gradients.transpose() * previous_layer_derivative_output.transpose();
+    output_layer_gradients = output_layer_gradients.transpose() * previous_layer_output.transpose();
 
 //    std::cout << "OUTPUT LAYER GRADIENTS" << std::endl;
 //    std::cout << output_layer_gradients << std::endl;
@@ -192,7 +192,10 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
             current_layer_gradients.set_value(0, j, value);
         }
 
-        cached_gradients.emplace_back(current_layer_gradients);
+//        std::cout << "CURRENT CACHED LAYER GRADIENTS" << std::endl;
+//        std::cout << current_layer_gradients << std::endl;
+
+        cached_gradients.emplace_back(current_layer_gradients.transpose());
         current_layer_gradients = current_layer_gradients * previous_layer_output.transpose();
 
 //        std::cout << "CURRENT LAYER GRADIENTS" << std::endl;
@@ -227,8 +230,14 @@ void NeuralNetwork::update_weights() {
         auto weights = current_layer->get_weights();
         auto gradients = averaged_gradients[i - 1];
 
+//        std::cout << "WEIGHTS" << std::endl;
+//        std::cout << weights << std::endl;
+
         auto new_weights = weights + (gradients * this->learning_rate);
         current_layer->set_weights(new_weights);
+
+//        std::cout << "NEW WEIGHTS" << std::endl;
+//        std::cout << new_weights << std::endl;
     }
 }
 
@@ -271,7 +280,7 @@ void NeuralNetwork::train(x_y_matrix &training_data, uint32_t epochs, bool verbo
         error /= training_data.first.get_dims()[0];
         this->training_error.add_row({error});
 
-        if (verbose && !(i % 100))
+        if (verbose && !(i % (epochs / 100)))
             std::cout << "Epoch: " << i << " Error: " << error << std::endl;
 
     }
