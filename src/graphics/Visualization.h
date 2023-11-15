@@ -10,6 +10,8 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_stdlib.h"
 #include "imgui_internal.h"
+#include "implot.h"
+#include "implot_internal.h"
 
 class Visualization {
 private:
@@ -35,6 +37,14 @@ private:
     x_y_matrix test_data = std::make_pair(Matrix(0, 0), Matrix(0, 0));
     int number_of_classes = 0;
 
+    std::vector<float> visuals_data_x{};
+    float x_min = 0.0f;
+    float x_max = 0.0f;
+    std::vector<float> visuals_data_y{};
+    float y_min = 0.0f;
+    float y_max = 0.0f;
+    std::vector<int> visuals_data_class{};
+
     NeuralNetwork nn = NeuralNetwork(0, 0, std::vector<uint32_t>{}, act_func_type::relu, 0.0f, 0, false);
     int number_of_hidden_layers = 1;
     std::vector<int> number_of_neurons_in_hidden_layers = std::vector<int>{8};
@@ -42,7 +52,14 @@ private:
     float learning_rate = 0.01f;
     int batch_size = 10;
     bool use_softmax = true;
+
+    std::vector<float> visuals_data_x_nn_classified{};
+    std::vector<float> visuals_data_y_nn_classified{};
+    std::vector<int> visuals_data_class_nn_classified{};
+
     int number_of_epochs = 200;
+    int current_epoch = 1;
+    bool training = false;
 
 public:
     Visualization();

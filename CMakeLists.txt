@@ -19,6 +19,7 @@ include_directories(${GLEW_INCLUDE_DIRS})
 include_directories(lib/imgui)
 include_directories(lib/imgui/backends)
 include_directories(lib/imgui/misc/cpp)
+include_directories(lib/implot)
 
 set(
         imgui_files
@@ -34,6 +35,10 @@ set(
         lib/imgui/imstb_truetype.h
         lib/imgui/misc/cpp/imgui_stdlib.cpp
         lib/imgui/misc/cpp/imgui_stdlib.h
+        lib/implot/implot.cpp
+        lib/implot/implot.h
+        lib/implot/implot_internal.h
+        lib/implot/implot_items.cpp
 )
 
 set(

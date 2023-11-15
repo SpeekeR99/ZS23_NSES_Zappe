@@ -46,6 +46,7 @@ void Visualization::init() {
     /* Setup Dear ImGui context */
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     (void) io;
 
@@ -76,6 +77,36 @@ void Visualization::render() {
     /* Render here */
     glClear(GL_COLOR_BUFFER_BIT);
 
+    /* Training part */
+    if (training) {
+        nn.train_one_step(training_data, current_epoch++, true);
+
+        visuals_data_x_nn_classified.clear();
+        visuals_data_y_nn_classified.clear();
+        visuals_data_class_nn_classified.clear();
+
+        int steps = 50;
+        for (int i = 0; i < steps; i++) {
+            for (int j = 0; j < steps; ++j) {
+                float x = x_min + (x_max - x_min) / (float) steps * i;
+                float y = y_min + (y_max - y_min) / (float) steps * j;
+                Matrix input = Matrix(1, 2);
+                input.set_value(0, 0, x);
+                input.set_value(0, 1, y);
+                Matrix output = nn.predict(input);
+                visuals_data_x_nn_classified.emplace_back(x);
+                visuals_data_y_nn_classified.emplace_back(y);
+                visuals_data_class_nn_classified.emplace_back(static_cast<int>(output.argmax()));
+            }
+        }
+
+        if (current_epoch > number_of_epochs) {
+            training = false;
+            std::cout << "Training finished" << std::endl;
+            std::cout << "Test data accuracy: " << nn.test(test_data) * 100 << " %" << std::endl;
+        }
+    }
+
     /* GUI part */
     {
         /* Set up style variables */
@@ -96,9 +127,6 @@ void Visualization::render() {
         /* Set up the main GUI menu bar */
         if (ImGui::BeginMenuBar()) {
             if (ImGui::BeginMenu("File")) { /* File menu */
-                if (ImGui::MenuItem("New..."))
-                    ; // TODO: mozna reinicializace?
-                ImGui::Separator();
                 if (ImGui::MenuItem("Exit", "Alt+F4"))
                     glfwSetWindowShouldClose(window, true);
                 ImGui::EndMenu();
@@ -142,17 +170,49 @@ void Visualization::render() {
             std::cout << "Test data size: " << test_data.first.get_dims()[0] << std::endl;
             number_of_classes = static_cast<int>(training_data.second.get_dims()[1]);
             std::cout << "Number of classes: " << number_of_classes << std::endl;
+
+            visuals_data_x.clear();
+            visuals_data_y.clear();
+            visuals_data_class.clear();
+            visuals_data_x_nn_classified.clear();
+            visuals_data_y_nn_classified.clear();
+            visuals_data_class_nn_classified.clear();
+
+            for (int i = 0; i < training_data.first.get_dims()[0]; i++) {
+                visuals_data_x.emplace_back(training_data.first.get_row(i).get_values()[0][0]);
+                visuals_data_y.emplace_back(training_data.first.get_row(i).get_values()[0][1]);
+                visuals_data_class.emplace_back(static_cast<int>(training_data.second.get_row(i).argmax()));
+            }
+            for (int i = 0; i < test_data.first.get_dims()[0]; i++) {
+                visuals_data_x.emplace_back(test_data.first.get_row(i).get_values()[0][0]);
+                visuals_data_y.emplace_back(test_data.first.get_row(i).get_values()[0][1]);
+                visuals_data_class.emplace_back(static_cast<int>(test_data.second.get_row(i).argmax()));
+            }
+
+            x_min = std::min_element(visuals_data_x.begin(), visuals_data_x.end()).operator*();
+            x_max = std::max_element(visuals_data_x.begin(), visuals_data_x.end()).operator*();
+            y_min = std::min_element(visuals_data_y.begin(), visuals_data_y.end()).operator*();
+            y_max = std::max_element(visuals_data_y.begin(), visuals_data_y.end()).operator*();
+            auto x_range = x_max - x_min;
+            auto y_range = y_max - y_min;
+            x_min -= x_range * 0.1f;
+            x_max += x_range * 0.1f;
+            y_min -= y_range * 0.1f;
+            y_max += y_range * 0.1f;
+
+            std::cout << "Data loaded" << std::endl;
         }
 
         /* Neural Network settings section */
         ImGui::SeparatorText("Neural Network settings");
         if (ImGui::InputInt("Number of hidden layers", &number_of_hidden_layers, 1, 1)) {
+            if (number_of_hidden_layers < 0) number_of_hidden_layers = 0;
             number_of_neurons_in_hidden_layers.resize(number_of_hidden_layers);
         }
         for (int i = 0; i < number_of_hidden_layers; i++) {
-            std::string label = "Number of neurons in hidden layer " + std::to_string(i + 1);
+            std::string label = "Number of neurons in layer " + std::to_string(i + 1);
             if (ImGui::InputInt(label.c_str(), &number_of_neurons_in_hidden_layers[i], 1, 1)) {
-
+                if (number_of_neurons_in_hidden_layers[i] < 0) number_of_neurons_in_hidden_layers[i] = 0;
             }
         }
         const char *activation_function_list[] = {
@@ -166,11 +226,11 @@ void Visualization::render() {
         if (ImGui::Combo("Activation function", (int *) &chosen_activation_function_idx, activation_function_list, IM_ARRAYSIZE(activation_function_list))) {
 
         }
-        if (ImGui::InputFloat("Learning rate", &learning_rate, 0.01f, 0.1f, "%.5f")) {
+        if (ImGui::InputFloat("Learning rate", &learning_rate, 0.001f, 0.01f, "%.5f")) {
 
         }
         if (ImGui::InputInt("Batch size", &batch_size, 1, 5)) {
-
+            if (batch_size < 1) batch_size = 1;
         }
         if (ImGui::Checkbox("Use softmax in output layer", &use_softmax)) {
 
@@ -183,6 +243,13 @@ void Visualization::render() {
             nn = NeuralNetwork(number_of_inputs, number_of_classes, temp_vector, static_cast<act_func_type>(chosen_activation_function_idx), learning_rate, batch_size, use_softmax);
             std::cout << "Neural Network created" << std::endl;
             std::cout << nn << std::endl;
+
+            visuals_data_x.clear();
+            visuals_data_y.clear();
+            visuals_data_class.clear();
+            visuals_data_x_nn_classified.clear();
+            visuals_data_y_nn_classified.clear();
+            visuals_data_class_nn_classified.clear();
         }
 
         /* Training section */
@@ -192,10 +259,110 @@ void Visualization::render() {
         }
         if (ImGui::Button("Train")) {
             std::cout << "Training started" << std::endl;
-            nn.train(training_data, number_of_epochs, true);
-            std::cout << "Training finished" << std::endl;
-            std::cout << "Test data accuracy: ";
-            nn.test(test_data);
+            training = true;
+            current_epoch = 1;
+        }
+        if (ImGui::Button("Pause")) {
+            std::cout << "Training paused" << std::endl;
+            training = false;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Resume")) {
+            std::cout << "Training resumed" << std::endl;
+            training = true;
+        }
+
+        ImGui::Separator();
+        if (ImGui::Button("Reset")) {
+            std::cout << "Training stopped; Neural Network reset" << std::endl;
+            training = false;
+            current_epoch = 1;
+            nn = NeuralNetwork(number_of_inputs, number_of_classes, std::vector<uint32_t>{}, static_cast<act_func_type>(chosen_activation_function_idx), learning_rate, batch_size, use_softmax);
+            visuals_data_x_nn_classified.clear();
+            visuals_data_y_nn_classified.clear();
+            visuals_data_class_nn_classified.clear();
+        }
+
+        ImGui::End();
+
+        ImGui::Begin("Data visuals", nullptr,
+                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
+                     ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
+                     ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar);
+
+        // Set up the main GUI window position, size and font size
+        ImGui::SetWindowPos(ImVec2((float) window_width / 2.0f, 0));
+        ImGui::SetWindowSize(ImVec2((float) window_width / 2.0f, (float) window_height));
+        ImGui::SetWindowFontScale(font_size);
+
+        if (ImGui::BeginTabBar("##TabBar")) {
+            if (ImGui::BeginTabItem("Data")) {
+                /* Visualization of the data and the neural network classification of the space */
+                ImPlot::SetNextAxesLimits(-10.0f, 10.0f, -10.0f, 10.0f, ImGuiCond_Appearing);
+                if (ImPlot::BeginPlot("Data", "x", "y", ImVec2(-1, -1), 0)) {
+                    for (int i = 0; i < training_data.first.get_dims()[0] + test_data.first.get_dims()[0]; i++) {
+                        int class_idx;
+                        for (int j = 0; j < number_of_classes; j++) {
+                            if (visuals_data_class[i] == j) {
+                                class_idx = j;
+                                break;
+                            }
+                        }
+                        ImPlot::PushStyleColor(ImPlotCol_MarkerOutline, ImPlot::GetColormapColor(class_idx));
+                        ImPlot::PushStyleColor(ImPlotCol_MarkerFill, ImPlot::GetColormapColor(class_idx));
+                        ImPlot::PushStyleVar(ImPlotStyleVar_Marker, ImPlotMarker_Circle);
+                        ImPlot::PushStyleVar(ImPlotStyleVar_MarkerSize, 4.0f);
+                        ImPlot::PushStyleVar(ImPlotStyleVar_MarkerWeight, 2.0f);
+                        ImPlot::PlotScatter(("Class " + std::to_string(class_idx)).c_str(), &visuals_data_x[i],
+                                            &visuals_data_y[i], 1);
+                        ImPlot::PopStyleVar(3);
+                        ImPlot::PopStyleColor(2);
+                    }
+
+                    /* Now plot with 50 % alpha the neural network classification of the space */
+                    for (int i = 0; i < visuals_data_class_nn_classified.size(); i++) {
+                        int class_idx;
+                        for (int j = 0; j < number_of_classes; j++) {
+                            if (visuals_data_class_nn_classified[i] == j) {
+                                class_idx = j;
+                                break;
+                            }
+                        }
+                        auto color = ImPlot::GetColormapColor(class_idx);
+                        color.w = 0.1f;
+                        ImPlot::PushStyleColor(ImPlotCol_MarkerOutline, color);
+                        ImPlot::PushStyleColor(ImPlotCol_MarkerFill, color);
+                        ImPlot::PushStyleVar(ImPlotStyleVar_Marker, ImPlotMarker_Circle);
+                        ImPlot::PushStyleVar(ImPlotStyleVar_MarkerSize, 10.0f);
+                        ImPlot::PushStyleVar(ImPlotStyleVar_MarkerWeight, 1.0f);
+                        ImPlot::PlotScatter(("##Classification " + std::to_string(i)).c_str(), &visuals_data_x_nn_classified[i],
+                                            &visuals_data_y_nn_classified[i], 1);
+                        ImPlot::PopStyleVar(3);
+                        ImPlot::PopStyleColor(2);
+                    }
+                }
+
+                ImPlot::EndPlot();
+
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Loss function")) {
+                /* Loss function over time */
+                Matrix training_error = nn.get_training_error();
+                float data[training_error.get_dims()[0]];
+                for (int i = 0; i < training_error.get_dims()[0]; i++)
+                    data[i] = training_error.get_row(i).get_values()[0][0];
+
+                ImPlot::SetNextAxesLimits(0.0f, (float) training_error.get_dims()[0], 0.0f, 1.0f, ImGuiCond_Appearing);
+                if (ImPlot::BeginPlot("Loss function", "Epoch", "Loss", ImVec2(-1, -1), 0, ImPlotAxisFlags_AutoFit)) {
+                    ImPlot::PlotLine("Loss", data, training_error.get_dims()[0]);
+                    ImPlot::EndPlot();
+                }
+
+                ImGui::EndTabItem();
+            }
+
+            ImGui::EndTabBar();
         }
 
         ImGui::End();
@@ -309,6 +476,7 @@ void Visualization::cleanup() {
     /* Cleanup */
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
     glfwDestroyWindow(window);

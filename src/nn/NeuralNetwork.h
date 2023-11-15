@@ -51,9 +51,11 @@ public:
     ~NeuralNetwork();
 
     [[nodiscard]] const std::vector<std::shared_ptr<Layer>> &get_layers() const;
+    [[nodiscard]] Matrix get_training_error() const;
 
     void train(x_y_matrix &training_data, uint32_t epochs, bool verbose = false);
-    void test(x_y_matrix &test_data);
+    void train_one_step(x_y_matrix &training_data, uint32_t epoch, bool verbose = false);
+    double test(x_y_matrix &test_data);
     Matrix predict(const Matrix &inputs);
 
     NeuralNetwork &operator=(const NeuralNetwork &nn);

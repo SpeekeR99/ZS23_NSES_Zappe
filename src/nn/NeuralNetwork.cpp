@@ -72,6 +72,10 @@ const std::vector<std::shared_ptr<Layer>> &NeuralNetwork::get_layers() const {
     return this->layers;
 }
 
+Matrix NeuralNetwork::get_training_error() const {
+    return this->training_error;
+}
+
 void NeuralNetwork::init_weights() {
     for (uint32_t i = 1; i < this->layers.size(); i++) {
         auto &previous_layer = this->layers[i - 1];
@@ -196,50 +200,53 @@ void NeuralNetwork::update_weights() {
 
 void NeuralNetwork::train(x_y_matrix &training_data, uint32_t epochs, bool verbose) {
     for (int i = 1; i <= epochs; i++) {
-        auto shuffled_indices = std::vector<uint32_t>(training_data.first.get_dims()[0]);
-        std::iota(shuffled_indices.begin(), shuffled_indices.end(), 0);
-        std::shuffle(shuffled_indices.begin(), shuffled_indices.end(), std::mt19937(std::random_device()()));
-
-        auto batches = std::vector<std::vector<uint32_t>>(training_data.first.get_dims()[0] / this->batch_size,
-                                                          std::vector<uint32_t>(this->batch_size));
-        for (uint32_t j = 0; j < training_data.first.get_dims()[0] / this->batch_size; j++)
-            for (uint32_t k = 0; k < this->batch_size; k++) {
-                if (j * this->batch_size + k >= training_data.first.get_dims()[0])
-                    break;
-                batches[j][k] = shuffled_indices[j * this->batch_size + k];
-            }
-
-        double error = 0;
-        for (auto &batch : batches) {
-            this->reset_gradient();
-
-            auto batch_inputs = Matrix(batch.size(), training_data.first.get_dims()[1], false);
-            auto batch_outputs = Matrix(batch.size(), training_data.second.get_dims()[1], false);
-
-            for (uint32_t j = 0; j < batch.size(); j++) {
-                batch_inputs.set_row(j, training_data.first.get_row(batch[j]).get_values()[0]);
-                batch_outputs.set_row(j, training_data.second.get_row(batch[j]).get_values()[0]);
-            }
-
-            for (uint32_t j = 0; j < batch.size(); j++) {
-                this->set_input(batch_inputs.get_row(j));
-                this->feed_forward();
-                error += this->loss(batch_outputs.get_row(j));
-                this->back_propagation(batch_outputs.get_row(j));
-            }
-
-            this->update_weights();
-        }
-        error /= training_data.first.get_dims()[0];
-        this->training_error.add_row({error});
-
-        if (verbose && !(i % (epochs / 100)))
-            std::cout << "Epoch: " << i << " Error: " << error << std::endl;
-
+        this->train_one_step(training_data, i, verbose);
     }
 }
 
-void NeuralNetwork::test(x_y_matrix &test_data) {
+void NeuralNetwork::train_one_step(x_y_matrix &training_data, uint32_t epoch, bool verbose) {
+    auto shuffled_indices = std::vector<uint32_t>(training_data.first.get_dims()[0]);
+    std::iota(shuffled_indices.begin(), shuffled_indices.end(), 0);
+    std::shuffle(shuffled_indices.begin(), shuffled_indices.end(), std::mt19937(std::random_device()()));
+
+    auto batches = std::vector<std::vector<uint32_t>>(training_data.first.get_dims()[0] / this->batch_size,
+                                                      std::vector<uint32_t>(this->batch_size));
+    for (uint32_t j = 0; j < training_data.first.get_dims()[0] / this->batch_size; j++)
+        for (uint32_t k = 0; k < this->batch_size; k++) {
+            if (j * this->batch_size + k >= training_data.first.get_dims()[0])
+                break;
+            batches[j][k] = shuffled_indices[j * this->batch_size + k];
+        }
+
+    double error = 0;
+    for (auto &batch : batches) {
+        this->reset_gradient();
+
+        auto batch_inputs = Matrix(batch.size(), training_data.first.get_dims()[1], false);
+        auto batch_outputs = Matrix(batch.size(), training_data.second.get_dims()[1], false);
+
+        for (uint32_t j = 0; j < batch.size(); j++) {
+            batch_inputs.set_row(j, training_data.first.get_row(batch[j]).get_values()[0]);
+            batch_outputs.set_row(j, training_data.second.get_row(batch[j]).get_values()[0]);
+        }
+
+        for (uint32_t j = 0; j < batch.size(); j++) {
+            this->set_input(batch_inputs.get_row(j));
+            this->feed_forward();
+            error += this->loss(batch_outputs.get_row(j));
+            this->back_propagation(batch_outputs.get_row(j));
+        }
+
+        this->update_weights();
+    }
+    error /= training_data.first.get_dims()[0];
+    this->training_error.add_row({error});
+
+    if (verbose)
+        std::cout << "Epoch: " << epoch << " Error: " << error << std::endl;
+}
+
+double NeuralNetwork::test(x_y_matrix &test_data) {
     double correct = 0;
     for (uint32_t i = 0; i < test_data.first.get_dims()[0]; i++) {
         this->set_input(test_data.first.get_row(i));
@@ -251,7 +258,8 @@ void NeuralNetwork::test(x_y_matrix &test_data) {
         if (nn_output_max == expected_output_max)
                 correct++;
     }
-    std::cout << "Accuracy: " << correct / test_data.first.get_dims()[0] * 100 << " %" << std::endl;
+
+    return correct / test_data.first.get_dims()[0];
 }
 
 Matrix NeuralNetwork::predict(const Matrix &inputs) {
