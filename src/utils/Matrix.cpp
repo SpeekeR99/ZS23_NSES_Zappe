@@ -123,6 +123,18 @@ std::vector<uint32_t> Matrix::get_dims() const {
     return {this->rows, this->cols};
 }
 
+uint32_t Matrix::argmax() const {
+    double max = this->data[0][0];
+    uint32_t max_idx = 0;
+    for (int i = 0; i < this->rows; i++)
+        for (int j = 0; j < this->cols; j++)
+            if (this->data[i][j] > max) {
+                max = this->data[i][j];
+                max_idx = i * this->cols + j;
+            }
+    return max_idx;
+}
+
 Matrix &Matrix::operator=(const Matrix &other) noexcept {
     this->rows = other.rows;
     this->cols = other.cols;

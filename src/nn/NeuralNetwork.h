@@ -53,5 +53,6 @@ public:
     [[nodiscard]] std::vector<std::unique_ptr<Layer>> &get_layers();
 
     void train(x_y_matrix &training_data, uint32_t epochs, bool verbose = false);
+    void test(x_y_matrix &test_data);
     Matrix predict(const Matrix &inputs);
 };

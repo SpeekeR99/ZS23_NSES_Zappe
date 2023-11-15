@@ -59,8 +59,8 @@ add_executable(
         src/utils/Matrix.h
         src/utils/DataLoader.cpp
         src/utils/DataLoader.h
-        src/graphics/visualization.cpp
-        src/graphics/visualization.h
+        src/graphics/Visualization.cpp
+        src/graphics/Visualization.h
         ${imgui_files}
         ${imgui_impl_files}
 )

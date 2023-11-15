@@ -56,6 +56,25 @@ x_y_pairs DataLoader::transform_y_to_one_hot(const x_y_pairs &data) {
     return one_hot_data;
 }
 
+std::pair<x_y_pairs, x_y_pairs> DataLoader::split_data(const x_y_pairs &data, double train_test_split) {
+    auto shuffled_indices = std::vector<uint32_t>(data.size());
+    std::iota(shuffled_indices.begin(), shuffled_indices.end(), 0);
+    std::shuffle(shuffled_indices.begin(), shuffled_indices.end(), std::mt19937(std::random_device()()));
+
+    auto train_size = static_cast<uint32_t>(data.size() * train_test_split);
+    auto test_size = data.size() - train_size;
+
+    x_y_pairs train_data(train_size);
+    x_y_pairs test_data(test_size);
+
+    for (uint32_t i = 0; i < train_size; i++)
+        train_data[i] = data[shuffled_indices[i]];
+    for (uint32_t i = 0; i < test_size; i++)
+        test_data[i] = data[shuffled_indices[i + train_size]];
+
+    return std::make_pair(train_data, test_data);
+}
+
 x_y_matrix DataLoader::transform_to_matrices(const x_y_pairs &data) {
     Matrix x(data.size(), data[0].first.size(), false);
     Matrix y(data.size(), data[0].second.size(), false);

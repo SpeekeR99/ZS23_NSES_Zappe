@@ -105,18 +105,9 @@ void NeuralNetwork::feed_forward() {
         auto inputs = previous_layer->get_output();
         inputs.add_row({1.}); // bias
 
-//        std::cout << "INPUTS" << std::endl;
-//        std::cout << inputs << std::endl;
-
         auto weights = current_layer->get_weights();
 
-//        std::cout << "WEIGHTS" << std::endl;
-//        std::cout << weights << std::endl;
-
         inputs = weights * inputs;
-
-//        std::cout << "WEIGHTED INPUTS" << std::endl;
-//        std::cout << inputs << std::endl;
 
         current_layer->set_inputs(inputs);
         current_layer->activate();
@@ -135,15 +126,6 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
     auto previous_layer_output = previous_layer->get_output();
     previous_layer_output.add_row({1.}); // bias
 
-//    std::cout << "EXPECTED OUTPUT" << std::endl;
-//    std::cout << expected_output << std::endl;
-//    std::cout << "OUTPUT LAYER OUTPUT" << std::endl;
-//    std::cout << output_layer_output << std::endl;
-//    std::cout << "OUTPUT LAYER DERIVATIVE OUTPUT" << std::endl;
-//    std::cout << output_layer_derivative_output << std::endl;
-//    std::cout << "PREVIOUS LAYER DERIVATIVE OUTPUT" << std::endl;
-//    std::cout << previous_layer_derivative_output << std::endl;
-
     Matrix output_layer_gradients = (expected_output - output_layer_output.transpose());
     if (!(this->softmax_output)) { /* Mean squared error */
         for (uint32_t i = 0; i < output_layer_gradients.get_dims()[1]; i++) {
@@ -155,9 +137,6 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
     cached_gradients.emplace_back(output_layer_gradients);
     output_layer_gradients = output_layer_gradients.transpose() * previous_layer_output.transpose();
 
-//    std::cout << "OUTPUT LAYER GRADIENTS" << std::endl;
-//    std::cout << output_layer_gradients << std::endl;
-
     this->gradient[this->gradient.size() - 1].emplace_back(output_layer_gradients);
 
     /* Calculate hidden layers gradients */
@@ -166,25 +145,14 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
         auto current_layer_derivative_output = current_layer->get_derivative_output();
         current_layer_derivative_output.add_row({1.}); // bias
 
-//        std::cout << "CURRENT LAYER DERIVATIVE OUTPUT" << std::endl;
-//        std::cout << current_layer_derivative_output << std::endl;
-
         auto &next_layer = this->layers[i + 1];
         auto next_layer_gradients = cached_gradients[this->layers.size() - 2 - i];
         auto next_layer_weights = next_layer->get_weights();
         next_layer_weights.remove_col(next_layer_weights.get_dims()[1] - 1); // remove bias
 
-//        std::cout << "NEXT LAYER GRADIENTS" << std::endl;
-//        std::cout << next_layer_gradients << std::endl;
-//        std::cout << "NEXT LAYER WEIGHTS" << std::endl;
-//        std::cout << next_layer_weights << std::endl;
-
         auto &previous_layer = this->layers[i - 1];
         auto previous_layer_output = previous_layer->get_output();
         previous_layer_output.add_row({1.}); // bias
-
-//        std::cout << "PREVIOUS LAYER DERIVATIVE OUTPUT" << std::endl;
-//        std::cout << previous_layer_output << std::endl;
 
         auto current_layer_gradients = (next_layer_gradients * next_layer_weights).transpose();
         for (uint32_t j = 0; j < current_layer_gradients.get_dims()[1]; j++) {
@@ -192,14 +160,8 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
             current_layer_gradients.set_value(0, j, value);
         }
 
-//        std::cout << "CURRENT CACHED LAYER GRADIENTS" << std::endl;
-//        std::cout << current_layer_gradients << std::endl;
-
         cached_gradients.emplace_back(current_layer_gradients.transpose());
         current_layer_gradients = current_layer_gradients * previous_layer_output.transpose();
-
-//        std::cout << "CURRENT LAYER GRADIENTS" << std::endl;
-//        std::cout << current_layer_gradients << std::endl;
 
         this->gradient[i - 1].emplace_back(current_layer_gradients);
     }
@@ -221,23 +183,14 @@ void NeuralNetwork::update_weights() {
         averaged_gradients.emplace_back(std::move(averaged_gradient));
     }
 
-//    for (auto &g : averaged_gradients)
-//        std::cout << g << std::endl;
-
     for (uint32_t i = 1; i < this->layers.size(); i++) {
         auto &current_layer = this->layers[i];
 
         auto weights = current_layer->get_weights();
         auto gradients = averaged_gradients[i - 1];
 
-//        std::cout << "WEIGHTS" << std::endl;
-//        std::cout << weights << std::endl;
-
         auto new_weights = weights + (gradients * this->learning_rate);
         current_layer->set_weights(new_weights);
-
-//        std::cout << "NEW WEIGHTS" << std::endl;
-//        std::cout << new_weights << std::endl;
     }
 }
 
@@ -284,6 +237,21 @@ void NeuralNetwork::train(x_y_matrix &training_data, uint32_t epochs, bool verbo
             std::cout << "Epoch: " << i << " Error: " << error << std::endl;
 
     }
+}
+
+void NeuralNetwork::test(x_y_matrix &test_data) {
+    double correct = 0;
+    for (uint32_t i = 0; i < test_data.first.get_dims()[0]; i++) {
+        this->set_input(test_data.first.get_row(i));
+        this->feed_forward();
+        auto nn_output = this->get_output();
+        auto expected_output = test_data.second.get_row(i);
+        auto nn_output_max = nn_output.argmax();
+        auto expected_output_max = expected_output.argmax();
+        if (nn_output_max == expected_output_max)
+                correct++;
+    }
+    std::cout << "Accuracy: " << correct / test_data.first.get_dims()[0] * 100 << " %" << std::endl;
 }
 
 Matrix NeuralNetwork::predict(const Matrix &inputs) {

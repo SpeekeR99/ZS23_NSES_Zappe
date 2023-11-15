@@ -16,5 +16,6 @@ class DataLoader {
 public:
     static x_y_pairs load_file(const std::string &filename, uint32_t input_size, uint32_t output_size, char delimiter);
     static x_y_pairs transform_y_to_one_hot(const x_y_pairs &data);
+    static std::pair<x_y_pairs, x_y_pairs> split_data(const x_y_pairs &data, double train_test_split);
     static x_y_matrix transform_to_matrices(const x_y_pairs &data);
 };

@@ -36,6 +36,7 @@ public:
     [[nodiscard]] Matrix get_col(uint32_t col) const;
     [[nodiscard]] std::vector<std::vector<double>> get_values() const;
     [[nodiscard]] std::vector<uint32_t> get_dims() const;
+    [[nodiscard]] uint32_t argmax() const;
 
     Matrix &operator=(const Matrix &other) noexcept;
     Matrix &operator=(Matrix &&other) noexcept;
