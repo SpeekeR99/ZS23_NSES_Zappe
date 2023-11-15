@@ -10,7 +10,7 @@ class NeuralNetwork {
 private:
     uint32_t input_size;
     uint32_t output_size;
-    std::vector<std::unique_ptr<Layer>> layers;
+    std::vector<std::shared_ptr<Layer>> layers;
     Matrix training_error;
     double learning_rate;
     std::vector<std::vector<Matrix>> gradient;
@@ -21,13 +21,13 @@ private:
     [[nodiscard]] Matrix get_output() const;
 
     void init_weights();
+    void feed_forward();
     void reset_gradient();
     double loss(const Matrix &expected_output);
     void back_propagation(const Matrix &expected_output);
     void update_weights();
 
 public:
-    void feed_forward();
     NeuralNetwork(uint32_t input_size,
                   uint32_t output_size,
                   const std::vector<uint32_t> &hidden_layers_sizes,
@@ -50,9 +50,12 @@ public:
                   bool softmax_output = false);
     ~NeuralNetwork();
 
-    [[nodiscard]] std::vector<std::unique_ptr<Layer>> &get_layers();
+    [[nodiscard]] const std::vector<std::shared_ptr<Layer>> &get_layers() const;
 
     void train(x_y_matrix &training_data, uint32_t epochs, bool verbose = false);
     void test(x_y_matrix &test_data);
     Matrix predict(const Matrix &inputs);
+
+    NeuralNetwork &operator=(const NeuralNetwork &nn);
+    friend std::ostream &operator<<(std::ostream &os, const NeuralNetwork &nn);
 };

@@ -8,10 +8,10 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              bool softmax_output)
                              : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient{}, softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
-    this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
+    this->layers.emplace_back(std::make_shared<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
-        this->layers.emplace_back(std::make_unique<Layer>(hidden_layer_size));
-    this->layers.emplace_back(std::make_unique<Layer>(this->output_size));
+        this->layers.emplace_back(std::make_shared<Layer>(hidden_layer_size));
+    this->layers.emplace_back(std::make_shared<Layer>(this->output_size));
 
     this->init_weights();
     this->reset_gradient();
@@ -26,10 +26,10 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              bool softmax_output)
                              : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient{}, softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
-    this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
+    this->layers.emplace_back(std::make_shared<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
-        this->layers.emplace_back(std::make_unique<Layer>(hidden_layer_size, activation_function));
-    this->layers.emplace_back(std::make_unique<Layer>(this->output_size, activation_function));
+        this->layers.emplace_back(std::make_shared<Layer>(hidden_layer_size, activation_function));
+    this->layers.emplace_back(std::make_shared<Layer>(this->output_size, activation_function));
 
     this->init_weights();
     this->reset_gradient();
@@ -44,10 +44,10 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              bool softmax_output)
                              : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient{}, softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2);
-    this->layers.emplace_back(std::make_unique<Layer>(this->input_size, act_func_type::linear));
+    this->layers.emplace_back(std::make_shared<Layer>(this->input_size, act_func_type::linear));
     for (auto &hidden_layer_size : hidden_layers_sizes)
-        this->layers.emplace_back(std::make_unique<Layer>(hidden_layer_size, activation_function));
-    this->layers.emplace_back(std::make_unique<Layer>(this->output_size, activation_function));
+        this->layers.emplace_back(std::make_shared<Layer>(hidden_layer_size, activation_function));
+    this->layers.emplace_back(std::make_shared<Layer>(this->output_size, activation_function));
 
     this->init_weights();
     this->reset_gradient();
@@ -68,7 +68,7 @@ Matrix NeuralNetwork::get_output() const {
     return this->layers.back()->get_output();
 }
 
-std::vector<std::unique_ptr<Layer>> &NeuralNetwork::get_layers() {
+const std::vector<std::shared_ptr<Layer>> &NeuralNetwork::get_layers() const {
     return this->layers;
 }
 
@@ -258,4 +258,32 @@ Matrix NeuralNetwork::predict(const Matrix &inputs) {
     this->set_input(inputs);
     this->feed_forward();
     return this->get_output();
+}
+
+NeuralNetwork &NeuralNetwork::operator=(const NeuralNetwork &nn) {
+    this->input_size = nn.input_size;
+    this->output_size = nn.output_size;
+    this->layers.clear();
+    this->layers.reserve(nn.layers.size());
+    this->layers = nn.layers;
+    this->init_weights();
+    this->training_error = nn.training_error;
+    this->learning_rate = nn.learning_rate;
+    this->batch_size = nn.batch_size;
+    this->reset_gradient();
+    this->softmax_output = nn.softmax_output;
+    return *this;
+}
+
+std::ostream &operator<<(std::ostream &os, const NeuralNetwork &nn) {
+    os << "NeuralNetwork: " << std::endl;
+    os << "    Input size: " << nn.input_size << std::endl;
+    os << "    Output size: " << nn.output_size << std::endl;
+    os << "    Hidden Layers: " << std::endl;
+    for (int i = 1; i < nn.layers.size() - 1; i++)
+        os << "        Hidden layer " << i << " size: " << nn.layers[i]->get_size() << std::endl;
+    os << "    Learning rate: " << nn.learning_rate << std::endl;
+    os << "    Batch size: " << nn.batch_size << std::endl;
+    os << "    Softmax output: " << nn.softmax_output << std::endl;
+    return os;
 }
