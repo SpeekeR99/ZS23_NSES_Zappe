@@ -21,12 +21,8 @@ private:
     std::vector<std::shared_ptr<Layer>> layers;
     /** Training error */
     Matrix training_error;
-    /** Learning rate */
-    double learning_rate;
     /** Gradient of the neural network */
     std::vector<std::vector<Matrix>> gradient;
-    /** Batch size */
-    uint32_t batch_size;
     /** Softmax output */
     bool softmax_output;
 
@@ -70,8 +66,9 @@ private:
     void back_propagation(const Matrix &expected_output);
     /**
      * Update the weights of the neural network based on the gradient and the learning rate
+     * @param learning_rate Learning rate
      */
-    void update_weights();
+    void update_weights(double learning_rate);
 
 public:
     /**
@@ -79,50 +76,27 @@ public:
      * @param input_size Number of neurons in the input layer
      * @param output_size Number of neurons in the output layer
      * @param hidden_layers_sizes Number of neurons in each hidden layer
-     * @param learning_rate Learning rate
-     * @param batch_size Batch size
      * @param softmax_output Flag whether to use softmax output or not (MSE / Categorical Cross Entropy)
      */
-    NeuralNetwork(uint32_t input_size,
-                  uint32_t output_size,
-                  const std::vector<uint32_t> &hidden_layers_sizes,
-                  double learning_rate = 0.1,
-                  uint32_t batch_size = 1,
-                  bool softmax_output = false);
+    NeuralNetwork(uint32_t input_size, uint32_t output_size, const std::vector<uint32_t> &hidden_layers_sizes, bool softmax_output = false);
     /**
      * Constructor with activation function as a function pointer
      * @param input_size Number of neurons in the input layer
      * @param output_size Number of neurons in the output layer
      * @param hidden_layers_sizes Number of neurons in each hidden layer
      * @param activation_function Activation function of the neural network (as a function pointer)
-     * @param learning_rate Learning rate
-     * @param batch_size Batch size
      * @param softmax_output Flag whether to use softmax output or not (MSE / Categorical Cross Entropy)
      */
-    NeuralNetwork(uint32_t input_size,
-                  uint32_t output_size,
-                  const std::vector<uint32_t> &hidden_layers_sizes,
-                  act_func activation_function,
-                  double learning_rate = 0.1,
-                  uint32_t batch_size = 1,
-                  bool softmax_output = false);
+    NeuralNetwork(uint32_t input_size, uint32_t output_size, const std::vector<uint32_t> &hidden_layers_sizes, act_func activation_function, bool softmax_output = false);
     /**
      * Constructor with activation function as an enum value
      * @param input_size Number of neurons in the input layer
      * @param output_size Number of neurons in the output layer
      * @param hidden_layers_sizes Number of neurons in each hidden layer
      * @param activation_function Activation function of the neural network (as an enum value)
-     * @param learning_rate Learning rate
-     * @param batch_size Batch size
      * @param softmax_output Flag whether to use softmax output or not (MSE / Categorical Cross Entropy)
      */
-    NeuralNetwork(uint32_t input_size,
-                  uint32_t output_size,
-                  const std::vector<uint32_t> &hidden_layers_sizes,
-                  act_func_type activation_function,
-                  double learning_rate = 0.1,
-                  uint32_t batch_size = 1,
-                  bool softmax_output = false);
+    NeuralNetwork(uint32_t input_size, uint32_t output_size, const std::vector<uint32_t> &hidden_layers_sizes, act_func_type activation_function, bool softmax_output = false);
     /**
      * Default destructor
      */
@@ -143,16 +117,18 @@ public:
      * Train the neural network
      * @param training_data Training data
      * @param epochs Number of epochs
+     * @param learning_rate Learning rate
      * @param verbose Flag whether to print the training error after each epoch or not
      */
-    void train(x_y_matrix &training_data, uint32_t epochs, bool verbose = false);
+    void train(x_y_matrix &training_data, uint32_t epochs, double learning_rate, uint32_t batch_size, bool verbose = false);
     /**
      * Do one step of the training process
      * @param training_data Training data
      * @param epoch Current epoch
+     * @param learning_rate Learning rate
      * @param verbose Flag whether to print the training error after each epoch or not
      */
-    void train_one_step(x_y_matrix &training_data, uint32_t epoch, bool verbose = false);
+    void train_one_step(x_y_matrix &training_data, uint32_t epoch, double learning_rate, uint32_t batch_size, bool verbose = false);
     /**
      * Test the neural network
      * @param test_data Test data

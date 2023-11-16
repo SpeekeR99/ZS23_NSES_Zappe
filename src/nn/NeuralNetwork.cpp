@@ -3,10 +3,8 @@
 NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              uint32_t output_size,
                              const std::vector<uint32_t> &hidden_layers_sizes,
-                             double learning_rate,
-                             uint32_t batch_size,
                              bool softmax_output)
-                             : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient{}, softmax_output(softmax_output) {
+                             : input_size(input_size), output_size(output_size), training_error(0, 1), gradient{}, softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2); /* +2 for input and output layers */
     this->layers.emplace_back(std::make_shared<Layer>(this->input_size, act_func_type::linear)); /* input layer is linear */
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -23,10 +21,8 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              uint32_t output_size,
                              const std::vector<uint32_t> &hidden_layers_sizes,
                              act_func activation_function,
-                             double learning_rate,
-                             uint32_t batch_size,
                              bool softmax_output)
-                             : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient{}, softmax_output(softmax_output) {
+                             : input_size(input_size), output_size(output_size), training_error(0, 1), gradient{}, softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2); /* +2 for input and output layers */
     this->layers.emplace_back(std::make_shared<Layer>(this->input_size, act_func_type::linear)); /* input layer is linear */
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -43,10 +39,8 @@ NeuralNetwork::NeuralNetwork(uint32_t input_size,
                              uint32_t output_size,
                              const std::vector<uint32_t> &hidden_layers_sizes,
                              act_func_type activation_function,
-                             double learning_rate,
-                             uint32_t batch_size,
                              bool softmax_output)
-                             : input_size(input_size), output_size(output_size), training_error(0, 1), learning_rate(learning_rate), batch_size(batch_size), gradient{}, softmax_output(softmax_output) {
+                             : input_size(input_size), output_size(output_size), training_error(0, 1), gradient{}, softmax_output(softmax_output) {
     this->layers.reserve(hidden_layers_sizes.size() + 2); /* +2 for input and output layers */
     this->layers.emplace_back(std::make_shared<Layer>(this->input_size, act_func_type::linear)); /* input layer is linear */
     for (auto &hidden_layer_size : hidden_layers_sizes)
@@ -177,7 +171,7 @@ void NeuralNetwork::back_propagation(const Matrix &expected_output) {
     }
 }
 
-void NeuralNetwork::update_weights() {
+void NeuralNetwork::update_weights(double learning_rate) {
     /* Average gradients over batches */
     std::vector<Matrix> averaged_gradients = {};
 
@@ -204,30 +198,30 @@ void NeuralNetwork::update_weights() {
         auto gradients = averaged_gradients[i - 1];
 
         /* Update weights */
-        auto new_weights = weights + (gradients * this->learning_rate);
+        auto new_weights = weights + (gradients * learning_rate);
         current_layer->set_weights(new_weights);
     }
 }
 
-void NeuralNetwork::train(x_y_matrix &training_data, uint32_t epochs, bool verbose) {
+void NeuralNetwork::train(x_y_matrix &training_data, uint32_t epochs, double learning_rate, uint32_t batch_size, bool verbose) {
     for (int i = 1; i <= epochs; i++)
-        this->train_one_step(training_data, i, verbose);
+        this->train_one_step(training_data, i, learning_rate, batch_size, verbose);
 }
 
-void NeuralNetwork::train_one_step(x_y_matrix &training_data, uint32_t epoch, bool verbose) {
+void NeuralNetwork::train_one_step(x_y_matrix &training_data, uint32_t epoch, double learning_rate, uint32_t batch_size, bool verbose) {
     /* Shuffle training data */
     auto shuffled_indices = std::vector<uint32_t>(training_data.first.get_dims()[0]);
     std::iota(shuffled_indices.begin(), shuffled_indices.end(), 0);
     std::shuffle(shuffled_indices.begin(), shuffled_indices.end(), std::mt19937(std::random_device()()));
 
     /* Create batches */
-    auto batches = std::vector<std::vector<uint32_t>>(training_data.first.get_dims()[0] / this->batch_size,
-                                                      std::vector<uint32_t>(this->batch_size));
-    for (uint32_t j = 0; j < training_data.first.get_dims()[0] / this->batch_size; j++)
-        for (uint32_t k = 0; k < this->batch_size; k++) {
-            if (j * this->batch_size + k >= training_data.first.get_dims()[0])
+    auto batches = std::vector<std::vector<uint32_t>>(training_data.first.get_dims()[0] / batch_size,
+                                                      std::vector<uint32_t>(batch_size));
+    for (uint32_t j = 0; j < training_data.first.get_dims()[0] / batch_size; j++)
+        for (uint32_t k = 0; k < batch_size; k++) {
+            if (j * batch_size + k >= training_data.first.get_dims()[0])
                 break;
-            batches[j][k] = shuffled_indices[j * this->batch_size + k];
+            batches[j][k] = shuffled_indices[j * batch_size + k];
         }
 
     /* Train on batches */
@@ -253,7 +247,7 @@ void NeuralNetwork::train_one_step(x_y_matrix &training_data, uint32_t epoch, bo
         }
 
         /* Update weights */
-        this->update_weights();
+        this->update_weights(learning_rate);
     }
     /* Calculate average error over all batches */
     error /= training_data.first.get_dims()[0];
@@ -295,8 +289,6 @@ NeuralNetwork &NeuralNetwork::operator=(const NeuralNetwork &nn) {
     this->layers = nn.layers;
     this->init_weights();
     this->training_error = nn.training_error;
-    this->learning_rate = nn.learning_rate;
-    this->batch_size = nn.batch_size;
     this->reset_gradient();
     this->softmax_output = nn.softmax_output;
     return *this;
@@ -309,8 +301,6 @@ std::ostream &operator<<(std::ostream &os, const NeuralNetwork &nn) {
     os << "    Hidden Layers: " << std::endl;
     for (int i = 1; i < nn.layers.size() - 1; i++)
         os << "        Hidden layer " << i << " size: " << nn.layers[i]->get_size() << std::endl;
-    os << "    Learning rate: " << nn.learning_rate << std::endl;
-    os << "    Batch size: " << nn.batch_size << std::endl;
     os << "    Softmax output: " << nn.softmax_output << std::endl;
     return os;
 }

@@ -87,7 +87,7 @@ private:
     std::vector<int> visuals_data_class{};
 
     /** Neural network, can be changed from the gui */
-    NeuralNetwork nn = NeuralNetwork(0, 0, std::vector<uint32_t>{}, act_func_type::relu, 0.0f, 0, false);
+    NeuralNetwork nn = NeuralNetwork(0, 0, std::vector<uint32_t>{}, act_func_type::relu, false);
     /** Number of hidden layers, can be changed from the gui */
     int number_of_hidden_layers = 1;
     /** Number of neurons in hidden layers, can be changed from the gui */

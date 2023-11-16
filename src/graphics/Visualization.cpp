@@ -80,7 +80,7 @@ void Visualization::render() {
     /* Training part */
     if (training) {
         /* Do one step of training */
-        nn.train_one_step(training_data, current_epoch++, true);
+        nn.train_one_step(training_data, current_epoch++, learning_rate, batch_size, true);
 
         /* Clear cached data */
         visuals_data_x_nn_classified.clear();
@@ -246,14 +246,6 @@ void Visualization::render() {
 
         }
 
-        if (ImGui::InputFloat("Learning rate", &learning_rate, 0.001f, 0.01f, "%.5f")) {
-
-        }
-
-        if (ImGui::InputInt("Batch size", &batch_size, 1, 5)) {
-            if (batch_size < 1) batch_size = 1;
-        }
-
         if (ImGui::Checkbox("Use softmax in output layer", &use_softmax)) {
 
         }
@@ -265,7 +257,7 @@ void Visualization::render() {
             for (int i = 0; i < number_of_hidden_layers; i++)
                 temp_vector[i] = number_of_neurons_in_hidden_layers[i];
 
-            nn = NeuralNetwork(number_of_inputs, number_of_classes, temp_vector, static_cast<act_func_type>(chosen_activation_function_idx), learning_rate, batch_size, use_softmax);
+            nn = NeuralNetwork(number_of_inputs, number_of_classes, temp_vector, static_cast<act_func_type>(chosen_activation_function_idx), use_softmax);
 
             std::cout << "Neural Network created" << std::endl;
             std::cout << nn << std::endl;
@@ -284,6 +276,14 @@ void Visualization::render() {
 
         if (ImGui::InputInt("Number of epochs", &number_of_epochs, 1, 5)) {
 
+        }
+
+        if (ImGui::InputFloat("Learning rate", &learning_rate, 0.001f, 0.01f, "%.5f")) {
+
+        }
+
+        if (ImGui::InputInt("Batch size", &batch_size, 1, 5)) {
+            if (batch_size < 1) batch_size = 1;
         }
 
         if (ImGui::Button("Train")) {
@@ -310,7 +310,7 @@ void Visualization::render() {
             training = false;
             current_epoch = 1;
 
-            nn = NeuralNetwork(number_of_inputs, number_of_classes, std::vector<uint32_t>{}, static_cast<act_func_type>(chosen_activation_function_idx), learning_rate, batch_size, use_softmax);
+            nn = NeuralNetwork(number_of_inputs, number_of_classes, std::vector<uint32_t>{}, static_cast<act_func_type>(chosen_activation_function_idx), use_softmax);
 
             /* Clear cached data */
             visuals_data_x_nn_classified.clear();
