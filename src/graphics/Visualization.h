@@ -93,7 +93,7 @@ private:
     /** Number of neurons in hidden layers, can be changed from the gui */
     std::vector<int> number_of_neurons_in_hidden_layers = std::vector<int>{8};
     /** Activation function, can be changed from the gui */
-    int chosen_activation_function_idx = 1;
+    std::vector<int> chosen_activation_functions = std::vector<int>{static_cast<int>(act_func_type::relu), static_cast<int>(act_func_type::relu)};
     /** Learning rate, can be changed from the gui */
     float learning_rate = 0.01f;
     /** Batch size, can be changed from the gui */

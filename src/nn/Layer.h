@@ -129,4 +129,8 @@ public:
      * @return Weights of the layer (weights include bias term)
      */
     [[nodiscard]] Matrix get_weights() const;
+    /**
+     * Get the name of the activation function of the layer
+     */
+    [[nodiscard]] std::string get_activation_function_name() const;
 };

@@ -296,11 +296,13 @@ NeuralNetwork &NeuralNetwork::operator=(const NeuralNetwork &nn) {
 
 std::ostream &operator<<(std::ostream &os, const NeuralNetwork &nn) {
     os << "NeuralNetwork: " << std::endl;
-    os << "    Input size: " << nn.input_size << std::endl;
-    os << "    Output size: " << nn.output_size << std::endl;
-    os << "    Hidden Layers: " << std::endl;
-    for (int i = 1; i < nn.layers.size() - 1; i++)
+    os << "    Input layer size: " << nn.input_size << std::endl;
+    os << "    Hidden layers: " << std::endl;
+    for (int i = 1; i < nn.layers.size() - 1; i++) {
         os << "        Hidden layer " << i << " size: " << nn.layers[i]->get_size() << std::endl;
+        os << "        Hidden layer " << i << " activation function: " << nn.layers[i]->get_activation_function_name() << std::endl;
+    }
+    os << "    Output layer size: " << nn.layers.back()->get_size() << std::endl;
     os << "    Softmax output: " << nn.softmax_output << std::endl;
     return os;
 }

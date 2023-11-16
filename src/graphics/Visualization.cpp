@@ -222,15 +222,15 @@ void Visualization::render() {
         /* Neural Network settings section */
         ImGui::SeparatorText("Neural Network settings");
 
+        int temp_old_number_of_hidden_layers = number_of_hidden_layers;
         if (ImGui::InputInt("Number of hidden layers", &number_of_hidden_layers, 1, 1)) {
             if (number_of_hidden_layers < 0) number_of_hidden_layers = 0;
             number_of_neurons_in_hidden_layers.resize(number_of_hidden_layers);
-        }
-
-        for (int i = 0; i < number_of_hidden_layers; i++) {
-            std::string label = "Number of neurons in layer " + std::to_string(i + 1);
-            if (ImGui::InputInt(label.c_str(), &number_of_neurons_in_hidden_layers[i], 1, 1)) {
-                if (number_of_neurons_in_hidden_layers[i] < 0) number_of_neurons_in_hidden_layers[i] = 0;
+            if (temp_old_number_of_hidden_layers < number_of_hidden_layers)
+                chosen_activation_functions.emplace(chosen_activation_functions.begin() + temp_old_number_of_hidden_layers, 1);
+            else {
+                auto last_hidden_layer = chosen_activation_functions.end() - 2;
+                chosen_activation_functions.erase(last_hidden_layer);
             }
         }
 
@@ -242,11 +242,22 @@ void Visualization::render() {
                 "Sign",
                 "Tanh"
         };
-        if (ImGui::Combo("Activation function", (int *) &chosen_activation_function_idx, activation_function_list, IM_ARRAYSIZE(activation_function_list))) {
+        for (int i = 0; i < number_of_hidden_layers; i++) {
+            std::string label = "Number of neurons in layer " + std::to_string(i + 1);
+            if (ImGui::InputInt(label.c_str(), &number_of_neurons_in_hidden_layers[i], 1, 1)) {
+                if (number_of_neurons_in_hidden_layers[i] < 0) number_of_neurons_in_hidden_layers[i] = 0;
+            }
+
+            std::string label2 = "Layer " + std::to_string(i + 1) + " activation function";
+            if (ImGui::Combo(label2.c_str(), (int *) &chosen_activation_functions[i], activation_function_list, IM_ARRAYSIZE(activation_function_list))) {
+
+            }
+        }
+        if (ImGui::Combo("Output activation function", (int *) &chosen_activation_functions[number_of_hidden_layers], activation_function_list, IM_ARRAYSIZE(activation_function_list))) {
 
         }
 
-        if (ImGui::Checkbox("Use softmax in output layer", &use_softmax)) {
+        if (ImGui::Checkbox("Use softmax in output layer instead", &use_softmax)) {
 
         }
 
@@ -257,7 +268,9 @@ void Visualization::render() {
             for (int i = 0; i < number_of_hidden_layers; i++)
                 temp_vector[i] = number_of_neurons_in_hidden_layers[i];
 
-            nn = NeuralNetwork(number_of_inputs, number_of_classes, temp_vector, static_cast<act_func_type>(chosen_activation_function_idx), use_softmax);
+            nn = NeuralNetwork(number_of_inputs, number_of_classes, temp_vector, use_softmax);
+            for (int i = 0; i < number_of_hidden_layers + 1; i++)
+                nn.get_layers()[i + 1]->set_activation_function(static_cast<act_func_type>(chosen_activation_functions[i]));
 
             std::cout << "Neural Network created" << std::endl;
             std::cout << nn << std::endl;
@@ -310,7 +323,14 @@ void Visualization::render() {
             training = false;
             current_epoch = 1;
 
-            nn = NeuralNetwork(number_of_inputs, number_of_classes, std::vector<uint32_t>{}, static_cast<act_func_type>(chosen_activation_function_idx), use_softmax);
+            std::vector<uint32_t> temp_vector{};
+            temp_vector.resize(number_of_hidden_layers);
+            for (int i = 0; i < number_of_hidden_layers; i++)
+                temp_vector[i] = number_of_neurons_in_hidden_layers[i];
+
+            nn = NeuralNetwork(number_of_inputs, number_of_classes, temp_vector, use_softmax);
+            for (int i = 0; i < number_of_hidden_layers + 1; i++)
+                nn.get_layers()[i + 1]->set_activation_function(static_cast<act_func_type>(chosen_activation_functions[i]));
 
             /* Clear cached data */
             visuals_data_x_nn_classified.clear();

@@ -18,6 +18,15 @@ act_func predefined_derivative_activation_functions[] = {
         [](double x) -> double { return 1 - pow(tanh(x), 2); },                                     /* tanh */
 };
 
+std::string act_func_names[] = {
+        "Linear",
+        "ReLU",
+        "Sigmoid",
+        "Step",
+        "Sign",
+        "Tanh",
+};
+
 Layer::Layer(uint32_t size) : size(size), activation_function(nullptr), derivative_activation_function(nullptr) {
     /* Neurons */
     this->neurons.reserve(this->size);
@@ -32,12 +41,6 @@ Layer::Layer(uint32_t size, act_func activation_function) : size(size), activati
         this->neurons.emplace_back(std::make_unique<Neuron>(0));
     /* Activation function */
     this->set_activation_function(activation_function);
-    for (int i = 0; i < static_cast<int>(act_func_type::number_of_activation_functions); i++) {
-        if (predefined_activation_functions[i] == activation_function) { /* Find the derivative of the activation function */
-            this->set_derivative_activation_function(predefined_derivative_activation_functions[i]);
-            break;
-        }
-    }
 }
 
 Layer::Layer(uint32_t size, act_func_type activation_function) : size(size), activation_function(nullptr), derivative_activation_function(nullptr) {
@@ -47,7 +50,6 @@ Layer::Layer(uint32_t size, act_func_type activation_function) : size(size), act
         this->neurons.emplace_back(std::make_unique<Neuron>(0));
     /* Activation function */
     this->set_activation_function(activation_function);
-    this->set_derivative_activation_function(activation_function); /* Derivative is easy here :) */
 }
 
 Layer::~Layer() = default;
@@ -68,10 +70,17 @@ void Layer::set_inputs(const Matrix &inputs) {
 
 void Layer::set_activation_function(act_func new_activation_function) {
     this->activation_function = new_activation_function;
+    for (int i = 0; i < static_cast<int>(act_func_type::number_of_activation_functions); i++) {
+        if (predefined_activation_functions[i] == new_activation_function) { /* Find the derivative of the activation function */
+            this->set_derivative_activation_function(predefined_derivative_activation_functions[i]);
+            break;
+        }
+    }
 }
 
 void Layer::set_activation_function(act_func_type new_activation_function) {
     this->activation_function = predefined_activation_functions[static_cast<uint32_t>(new_activation_function)];
+    this->set_derivative_activation_function(new_activation_function);
 }
 
 void Layer::set_derivative_activation_function(act_func new_derivative_activation_function) {
@@ -138,4 +147,11 @@ uint32_t Layer::get_size() const {
 
 Matrix Layer::get_weights() const {
     return this->weights;
+}
+
+std::string Layer::get_activation_function_name() const {
+    for (int i = 0; i < static_cast<int>(act_func_type::number_of_activation_functions); i++)
+        if (predefined_activation_functions[i] == this->activation_function) /* Find the name of the activation function */
+            return act_func_names[i];
+    return "Unknown";
 }
