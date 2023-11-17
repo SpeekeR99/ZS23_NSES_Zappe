@@ -276,9 +276,6 @@ void Visualization::render() {
             std::cout << nn << std::endl;
 
             /* Clear cached data */
-            visuals_data_x.clear();
-            visuals_data_y.clear();
-            visuals_data_class.clear();
             visuals_data_x_nn_classified.clear();
             visuals_data_y_nn_classified.clear();
             visuals_data_class_nn_classified.clear();
@@ -359,7 +356,7 @@ void Visualization::render() {
                 ImPlot::SetNextAxesLimits(-10.0f, 10.0f, -10.0f, 10.0f, ImGuiCond_Appearing);
                 if (ImPlot::BeginPlot("Data", "x", "y", ImVec2(-1, -1), 0)) {
                     /* Plot the data */
-                    for (int i = 0; i < training_data.first.get_dims()[0] + test_data.first.get_dims()[0]; i++) {
+                    for (int i = 0; i < visuals_data_class.size(); i++) {
                         /* Get the right color */
                         int class_idx;
                         for (int j = 0; j < number_of_classes; j++) {
@@ -369,9 +366,17 @@ void Visualization::render() {
                             }
                         }
 
+                        /* Test data should be darker */
+                        auto color = ImPlot::GetColormapColor(class_idx);
+                        if (i >= training_data.first.get_dims()[0]) {
+                            color.x *= 0.5f;
+                            color.y *= 0.5f;
+                            color.z *= 0.5f;
+                        }
+
                         /* Setup the style */
-                        ImPlot::PushStyleColor(ImPlotCol_MarkerOutline, ImPlot::GetColormapColor(class_idx));
-                        ImPlot::PushStyleColor(ImPlotCol_MarkerFill, ImPlot::GetColormapColor(class_idx));
+                        ImPlot::PushStyleColor(ImPlotCol_MarkerOutline, color);
+                        ImPlot::PushStyleColor(ImPlotCol_MarkerFill, color);
                         ImPlot::PushStyleVar(ImPlotStyleVar_Marker, ImPlotMarker_Circle);
                         ImPlot::PushStyleVar(ImPlotStyleVar_MarkerSize, 4.0f);
                         ImPlot::PushStyleVar(ImPlotStyleVar_MarkerWeight, 2.0f);
