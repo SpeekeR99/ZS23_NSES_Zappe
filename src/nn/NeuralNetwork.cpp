@@ -208,7 +208,7 @@ void NeuralNetwork::train(x_y_matrix &training_data, uint32_t epochs, double lea
         this->train_one_step(training_data, i, learning_rate, batch_size, verbose);
 
         if ((this->training_error.get_row(i - 1).get_value(0, 0) <= min_loss) ||
-            (i > 2 && std::abs(this->training_error.get_row(i - 1).get_value(0, 0) - this->training_error.get_row(i - 2).get_value(0, 0)) <= delta_loss))
+            (i > 1 && std::abs(this->training_error.get_row(i - 1).get_value(0, 0) - this->training_error.get_row(i - 2).get_value(0, 0)) <= delta_loss))
             break;
     }
 }
