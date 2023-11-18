@@ -119,8 +119,10 @@ public:
      * @param epochs Number of epochs
      * @param learning_rate Learning rate
      * @param verbose Flag whether to print the training error after each epoch or not
+     * @param min_loss Minimum loss to stop the training process
+     * @param delta_loss Minimum delta loss to stop the training process
      */
-    void train(x_y_matrix &training_data, uint32_t epochs, double learning_rate, uint32_t batch_size, bool verbose = false);
+    void train(x_y_matrix &training_data, uint32_t epochs, double learning_rate, uint32_t batch_size, bool verbose = false, double min_loss = 0.0, double delta_loss = 0.0);
     /**
      * Do one step of the training process
      * @param training_data Training data

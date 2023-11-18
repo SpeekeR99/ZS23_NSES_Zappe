@@ -112,6 +112,10 @@ private:
     int number_of_epochs = 200;
     /** Current epoch of the training process */
     int current_epoch = 1;
+    /** Minimum loss to stop the training process, can be changed from the gui */
+    double min_loss = 0.0;
+    /** Minimum delta loss to stop the training process, can be changed from the gui */
+    double delta_loss = 0.0;
     /** Flag if the training is running */
     bool training = false;
 

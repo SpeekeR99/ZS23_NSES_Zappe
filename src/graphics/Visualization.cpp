@@ -80,7 +80,7 @@ void Visualization::render() {
     /* Training part */
     if (training) {
         /* Do one step of training */
-        nn.train_one_step(training_data, current_epoch++, learning_rate, batch_size, true);
+        nn.train_one_step(training_data, current_epoch, learning_rate, batch_size, true);
 
         /* Clear cached data */
         visuals_data_x_nn_classified.clear();
@@ -112,6 +112,16 @@ void Visualization::render() {
             std::cout << "Training finished" << std::endl;
             std::cout << "Test data accuracy: " << nn.test(test_data) * 100 << " %" << std::endl;
         }
+
+        /* Check if the training is finished (early stopping) */
+        if (nn.get_training_error().get_row(current_epoch - 1).get_value(0, 0) < min_loss ||
+            (current_epoch > 2 && std::abs(nn.get_training_error().get_row(current_epoch - 1).get_value(0, 0) - nn.get_training_error().get_row(current_epoch - 2).get_value(0, 0)) < delta_loss)) {
+            training = false;
+            std::cout << "Training finished (early stopping)" << std::endl;
+            std::cout << "Test data accuracy: " << nn.test(test_data) * 100 << " %" << std::endl;
+        }
+
+        current_epoch++;
     }
 
     /* GUI part */
@@ -294,6 +304,14 @@ void Visualization::render() {
 
         if (ImGui::InputInt("Batch size", &batch_size, 1, 5)) {
             if (batch_size < 1) batch_size = 1;
+        }
+
+        if (ImGui::InputDouble("Minimum loss", &min_loss, 0.001f, 0.01f, "%.5f")) {
+            if (min_loss < 0.0) min_loss = 0.0;
+        }
+
+        if (ImGui::InputDouble("Minimum delta loss", &delta_loss, 0.001f, 0.01f, "%.5f")) {
+            if (delta_loss < 0.0) delta_loss = 0.0;
         }
 
         if (ImGui::Button("Train")) {

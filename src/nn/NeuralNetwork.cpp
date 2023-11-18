@@ -203,9 +203,14 @@ void NeuralNetwork::update_weights(double learning_rate) {
     }
 }
 
-void NeuralNetwork::train(x_y_matrix &training_data, uint32_t epochs, double learning_rate, uint32_t batch_size, bool verbose) {
-    for (int i = 1; i <= epochs; i++)
+void NeuralNetwork::train(x_y_matrix &training_data, uint32_t epochs, double learning_rate, uint32_t batch_size, bool verbose, double min_loss, double delta_loss) {
+    for (int i = 1; i <= epochs; i++) {
         this->train_one_step(training_data, i, learning_rate, batch_size, verbose);
+
+        if ((this->training_error.get_row(i - 1).get_value(0, 0) <= min_loss) ||
+            (i > 2 && std::abs(this->training_error.get_row(i - 1).get_value(0, 0) - this->training_error.get_row(i - 2).get_value(0, 0)) <= delta_loss))
+            break;
+    }
 }
 
 void NeuralNetwork::train_one_step(x_y_matrix &training_data, uint32_t epoch, double learning_rate, uint32_t batch_size, bool verbose) {
