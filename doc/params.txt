@@ -1,0 +1,38 @@
+tren_data1___23.txt:
+    Hidden 1:       8 neurons | ReLU
+    Output:         Softmax
+    Learning Rate:  0.1
+    Batch Size:     50
+    Epochs:         65 (early stopping: 0.01 min loss) (100 % acc)
+
+tren_data2___23.txt:
+    Hidden 1:       16 neurons | ReLU       | 16 neurons | ReLU
+    Hidden 2:       8 neurons | ReLU        | <nothing>
+    Output:         Softmax                 | Softmax
+    Learning Rate:  0.02                    | 0.05
+    Batch Size:     50                      | 50
+    Epochs:         200 (94 % acc)    | 200 (96 % acc)
+
+spiral.txt:
+    Hidden 1:       16 neurons | ReLU
+    Hidden 2:       12 neurons | Tanh
+    Output:         Softmax
+    Learning Rate:  0.07
+    Batch Size:     50
+    Epochs:         200 (93.3 % acc)
+
+moons.txt:
+    Hidden 1:       16 neurons | ReLU
+    Hidden 2:       12 neurons | Tanh
+    Output:         Softmax
+    Learning Rate:  0.07
+    Batch Size:     50
+    Epochs:         198 (early stopping: 0.01 min loss) (100 % acc)
+
+circles.txt:
+    Hidden 1:       16 neurons | ReLU
+    Hidden 2:       8 neurons | Tanh
+    Output:         Softmax
+    Learning Rate:  0.1
+    Batch Size:     50
+    Epochs:         30 (90.3 % acc)
